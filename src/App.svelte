@@ -110,8 +110,4 @@
     width: 150px;
     z-index: 3;
   }
-  .axis text,
-  .slider text {
-    font-size: 18px;
-  }
 </style>

@@ -164,7 +164,7 @@
 	    let content = `<h2>${prop.country}</h2>`;
 	    content += `${alertDate}<br>`;
 	    content += `<div class="alert-table"><div>Indicator: <span class="stat">${prop.indicator_name}</span></div>`;
-	    content += `<div>Alert Level: ${prop.alert_level}</div></div>`;
+	    content += `<div class="alert-level ${prop.alert_level.split(' ')[0]}">${prop.alert_level}</div></div>`;
 	    // content += `Value: <span class="stat">${numFormat(prop.value)}</span><br>`;
 	    // content += `Source: <span class="stat"><a href='${prop.source_url}' target='_blank'>${prop.indicator_source}</a></span><br>`;
 	    content += `<img class="plot" src="${prop.plot_url}" />`;
@@ -210,11 +210,11 @@
 		background-color: rgba(255,255,255,0.7);
 		bottom: 20px;
 		font-size: 14px;
-		height: 150px;
+		height: 125px;
 		position: absolute;
 		padding: 15px;
 		right: 20px;
-		width: 200px;
+		width: 175px;
 		z-index: 2;
 		svg g {
 			transform: translate(7px, 7px);

@@ -190,6 +190,20 @@ select {
     padding-right: 20px;
   }
 }
+.alert-level {
+  background-color: #888;
+  color: #FFF;
+  padding: 1px 4px;
+  &.High {
+    background-color: #C25048;
+  }
+  &.Medium {
+    background-color: #F2645A;
+  }
+  &.Low {
+    background-color: #F7A29C;
+  }
+}
 
 .axis text,
 .slider text {
