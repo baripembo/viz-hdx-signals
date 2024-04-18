@@ -1,6 +1,13 @@
 @import '_fonts';
 @import '_grid';
 
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
 :root {
   color: #000;
   font-family: 'Source Sans 3', sans-serif;
@@ -31,7 +38,7 @@ a {
 body {
   margin: 0 auto;
   display: flex;
-  width: 1170px;
+  width: 870px;
 }
 
 h1 {
@@ -61,6 +68,11 @@ h3 {
   font-weight: normal;
   line-height: 21px;
   margin: 0px 0px 10px; 
+}
+h4 {
+  margin-bottom: 10px;
+  margin-top: 0;
+  text-transform: uppercase;
 }
 
 .small {
@@ -106,9 +118,9 @@ h3 {
 }
 
 .select-wrapper {
-  margin-bottom: 30px;
+  margin: 10px 30px 30px 0;
   position: relative;
-  width: 200px;
+  width: 250px;
   &:after {
     color: #CCC;
     content: '\e94c';
@@ -131,6 +143,7 @@ select {
   height: 48px;
   padding: 0 20px;
   position: relative;
+  text-transform: capitalize;
   width: 100%;
 }
 
@@ -141,6 +154,44 @@ select {
   }
 }
 .map {
-  background-color: #EFEFEF;
-  height: 500px;
+  position: relative;
+}
+.mapboxgl-popup.map-tooltip {
+  z-index: 3;
+  .mapboxgl-popup-content {
+    text-transform: capitalize;
+    width: 430px;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,.3);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 18px;
+    padding: 15px;
+    .plot {
+      width: 400px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    a {
+      outline: none;
+    }
+  }
+}
+.mapboxgl-popup-close-button {
+  font-size: 25px;
+}
+.alert-table {  
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  >div:first-child {
+    padding-right: 20px;
+  }
+}
+
+.axis text,
+.slider text {
+  font-size: 12px;
 }
