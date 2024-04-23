@@ -6,7 +6,7 @@
   import KeyFigure from './lib/KeyFigure.svelte'
   import Map from './lib/Map.svelte'
 
-  let dateSlider, dates, regions, regionSelect, indicators;
+  let data, dateSlider, dates, regions, regionSelect, indicators;
   
   $: signalsData = [];
 
@@ -14,24 +14,21 @@
     header: true,
     download: true,
     complete: function(results) {
-      signalsData = results.data.filter(d => d.iso3 !== '');
-      dates = signalsData.map(d => new Date(d.date));
+      data = results.data.filter(d => d.iso3 !== '');
+      dates = data.map(d => new Date(d.date));
       
-      let regionArray = signalsData.map(d => d.region);
+      let regionArray = data.map(d => d.region);
       regions = [... new Set(regionArray)];
       
-      let indicatorArray = signalsData.map(d => d.indicator_name);
+      let indicatorArray = data.map(d => d.indicator_name);
       indicators = [... new Set(indicatorArray)];
 
-      console.log(signalsData)
+      signalsData = data;
+      //console.log(signalsData)
 
       createDateSlider();
     }
   })
-
-
-  onMount(async() => {
-  });
 
   function createDateSlider() {
     const sliderHeight = 680;
@@ -59,6 +56,15 @@
 
     g.call(slider);
   }
+
+  function onHRP(e) {
+    if (e.target.checked) {
+      signalsData = data.filter(d => d.hrp_country == 'TRUE');
+    }
+    else {
+      signalsData = data;
+    }
+  }
 </script>
 
 <main>
@@ -85,7 +91,7 @@
       </div>
     {/if}
 
-    <input type='checkbox' id="onlyHRP"> Only HRP
+    <input type='checkbox' id="onlyHRP" on:change={onHRP}> Only HRP
   </div>
   <div class='slider-container'>
     <div class='slider' bind:this={dateSlider} />

@@ -1,8 +1,8 @@
 <script>
 	import mapboxgl from 'mapbox-gl';
 	import * as d3 from 'd3';
-	import { legendColor } from 'd3-svg-legend';
 	import { onMount, onDestroy } from 'svelte';
+  import Legend from './Legend.svelte'
 	import '../../node_modules/mapbox-gl/dist/mapbox-gl.css'
 
 	mapboxgl.baseApiUrl = 'https://data.humdata.org/mapbox';
@@ -12,12 +12,21 @@
 	export let center = [20, 10];
 	export let zoom = 2;
 
-	let map, mapContainer, signalsGeoData, legend, colorScale, hoverTimer;
+	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, maxCount;
 
 	let colorRange = ['#C25048','#F2645A','#F7A29C','#FCE0DE'];
 	let tooltip = d3.select('.tooltip');
 	let numFormat = d3.format(',');
 	let dateFormat = d3.utcFormat('%b %d, %Y');
+
+	let minMarkerSize = 10;
+	let maxMarkerSize = 18;	
+
+	let data = signalsData;
+	$: if (data != signalsData) {  
+		data = signalsData;
+    updateFeatures();
+	}
 
 
 	onMount(() => {
@@ -45,35 +54,18 @@
 
 	  map.on('load', function() {
 	    console.log('Map loaded')
-		  console.log('in map', signalsData)
-			
-		  //set alert level color scale
-			colorScale = d3.scaleOrdinal()
-      .domain(['High concern', 'Medium concern', 'Low concern'])
-      .range(colorRange);
+		  console.log('in map', data)
 
 		  //initPolys();
 		  loadFeatures();
-		  createLegend();
 	  });
-
-
 	});
 
-
-	function createLegend() {
-		const colorLegend = legendColor()
-      .shape('path', d3.symbol().type(d3.symbolCircle).size(120)())
-			.scale(colorScale)
-		
-		d3.select(legend)
-			.call(colorLegend);
-	}
 
 	// function initPolys() {
 	//   //data join
 	//   var expression = ['match', ['get', 'ISO3_CODE']];
-	//   signalsData.forEach(function(d, i) {
+	//   data.forEach(function(d, i) {
 	//   	if (d.value!==undefined && i<3) {
 	// 	    var val = +d.value;
 	// 	    var color = '#888888';
@@ -89,24 +81,52 @@
 	// }
 
 	function loadFeatures() {
+	  //get alert count by country
+    // let countByCountry = data.reduce((a, {iso3}) => {
+    //   a[iso3] = a[iso3] || {iso3, count: 0};
+    //   a[iso3].count++;
+    //   return a;
+    // }, {});
+
+    countByCountry = Object.values(data.reduce((a, {iso3, lat, lon}) => {
+		  a[iso3] = a[iso3] || {iso3, alert_count: 0, lat, lon};
+		  a[iso3].alert_count++;
+		  return a;
+		}, Object.create(null)));
+
 		let signals = [];
 		let hrpList = [];
-		signalsData.forEach(function(signal, i) {
-			if (signal.iso3 !== '') {
-				signals.push({
-					'type': 'Feature',
-					'geometry': {
-						'type': 'Point',
-						'coordinates': [signal.lon, signal.lat]
-					},
-					'properties': signal
-				});
+		//create features from data array
+		// data.forEach(function(signal, i) {
+		// 	if (signal.iso3 !== '') {
+		// 		//add alert count to properties
+		// 		signal.alert_count = countByCountry[signal.iso3].count;
 
-				//save list of hrps
-				if (signal.hrp_country == 'TRUE') hrpList.push(signal.iso3);
-			}
+		// 		signals.push({
+		// 			'type': 'Feature',
+		// 			'geometry': {
+		// 				'type': 'Point',
+		// 				'coordinates': [signal.lon, signal.lat]
+		// 			},
+		// 			'properties': signal
+		// 		});
+
+		// 		//save list of hrps
+		// 		if (signal.hrp_country == 'TRUE') hrpList.push(signal.iso3);
+		// 	}
+		// });
+		countByCountry.forEach(function(signal, i) {
+			signals.push({
+				'type': 'Feature',
+				'geometry': {
+					'type': 'Point',
+					'coordinates': [signal.lon, signal.lat]
+				},
+				'properties': signal
+			});
 		});
 
+		//create geojson
 		signalsGeoData = {
 			'type': 'FeatureCollection',
 			'features': signals
@@ -117,19 +137,16 @@
 	    generateId: true 
 	  });
 
-
-		//create color scale for markers
-		let indicatorColorScale = [
-	    'match',
-	    ['get', 'alert_level'],
-	    'High concern',
-	    colorRange[0],
-	    'Medium concern',
-	    colorRange[1],
-	    'Low concern',
-	    colorRange[2],
-	    /* other */ '#ccc'
-	  ];
+		//create size scale for markers
+		maxCount = d3.max(countByCountry, d => d.alert_count)
+		let sizeScale = [
+      'interpolate',
+      ['linear'],
+      ['get', 'alert_count'],
+      1, minMarkerSize,
+      maxCount,
+      maxMarkerSize
+    ];
 
 		//add signal markers
 	  map.addLayer({
@@ -137,10 +154,10 @@
 	    type: 'circle',
 	    source: 'signals-source',
 	    paint: {
-	      'circle-color': indicatorColorScale,
-	      'circle-stroke-color': indicatorColorScale,
+	      'circle-color': '#F2645A',
+	      'circle-stroke-color': '#F2645A',
 	      'circle-opacity': 0.6,
-	      'circle-radius': 6,
+	      'circle-radius': sizeScale,
 	      'circle-stroke-width': 1,
 	    }
 	  });
@@ -159,16 +176,28 @@
 	  map.on('mouseleave', 'signal-dots', onMouseLeave);
 	  map.on('mousemove', 'signal-dots', function(e) {
 	    map.getCanvas().style.cursor = 'pointer';
-	    let prop = e.features[0].properties;
-	    let alertDate = dateFormat(new Date(prop.date));
-	    let content = `<h2>${prop.country}</h2>`;
-	    content += `${alertDate}<br>`;
-	    content += `<div class="alert-table"><div>Indicator: <span class="stat">${prop.indicator_name}</span></div>`;
-	    content += `<div class="alert-level ${prop.alert_level.split(' ')[0]}">${prop.alert_level}</div></div>`;
-	    // content += `Value: <span class="stat">${numFormat(prop.value)}</span><br>`;
-	    // content += `Source: <span class="stat"><a href='${prop.source_url}' target='_blank'>${prop.indicator_source}</a></span><br>`;
-	    content += `<img class="plot" src="${prop.plot_url}" />`;
-	    content += `${prop.further_information}`;
+	    // let prop = e.features[0].properties;
+	    // let alertDate = dateFormat(new Date(prop.date));
+	    // let content = `<h2>${prop.country}</h2>`;
+	    // content += `${alertDate}<br>`;
+	    // content += `<div class="alert-table"><div>Indicator: <span class="stat">${prop.indicator_name}</span></div>`;
+	    // content += `<div class="alert-level ${prop.alert_level.split(' ')[0]}">${prop.alert_level}</div></div>`;
+	    // // content += `Value: <span class="stat">${numFormat(prop.value)}</span><br>`;
+	    // // content += `Source: <span class="stat"><a href='${prop.source_url}' target='_blank'>${prop.indicator_source}</a></span><br>`;
+	    // content += `<img class="plot" src="${prop.plot_url}" />`;
+	    // content += `${prop.further_information}`;
+
+	    let alertDate = dateFormat(new Date(currentSignals[0].date));
+	    let numSignals = getNumAlerts(currentSignals[0].iso3)[0].alert_count;
+	    let content = `<h2>${currentSignals[0].country} <span>(${numSignals} ${numSignals>1 ? 'signals' : 'signal'})</span></h2>`;
+
+	    currentSignals.forEach(function(signal) {
+		    content += `<div class="signal">${alertDate}<br>`;
+		    content += `<div class="alert-table"><div>Indicator: <span class="stat">${signal.indicator_name}</span></div>`;
+		    content += `<div class="alert-level ${signal.alert_level.split(' ')[0]}">${signal.alert_level}</div></div>`;
+		    content += `<img class="plot" src="${signal.plot_url}" />`;
+		    content += `${signal.further_information}</div>`;
+	    })
 	    tooltip.setHTML(content);
 	    tooltip
 	      .addTo(map)
@@ -176,13 +205,56 @@
 	  });
 	}
 
+	function updateFeatures() {
+		if (map.getSource('signals-source')) {
+	  	countByCountry = Object.values(data.reduce((a, {iso3, lat, lon}) => {
+			  a[iso3] = a[iso3] || {iso3, alert_count: 0, lat, lon};
+			  a[iso3].alert_count++;
+			  return a;
+			}, Object.create(null)));
+
+			let signals = [];
+			countByCountry.forEach(function(signal, i) {
+				signals.push({
+					'type': 'Feature',
+					'geometry': {
+						'type': 'Point',
+						'coordinates': [signal.lon, signal.lat]
+					},
+					'properties': signal
+				});
+			});
+
+			//update geojson
+			signalsGeoData = {
+				'type': 'FeatureCollection',
+				'features': signals
+			}
+	  	map.getSource('signals-source').setData(signalsGeoData);
+	  }
+	}
+
+	function getNumAlerts(iso3) {
+		return countByCountry.filter(d => d.iso3 == iso3);
+	}
+
+	function getAlerts(iso3) {
+		//get all alerts for a country and sort by date
+		let alerts = data.filter(d => d.iso3 == iso3);
+		alerts.sort((a,b) => {
+			return new Date(b.date) - new Date(a.date);
+		});
+		return alerts;
+	}
+
 	//mouse event/leave events
 	function onMouseEnter(e) {
-		clearTimeout(hoverTimer);
+		//clearTimeout(hoverTimer);
+		let iso3 = e.features[0].properties.iso3;
+		currentSignals = getAlerts(iso3);
+
 	  map.getCanvas().style.cursor = 'pointer';
 	  tooltip.addTo(map);
-	  console.log(d3.select('.mapboxgl-popup-content'));
-	  console.log(d3.select('.map-tooltip'));
 	}
 	function onMouseLeave(e) {
 		// hoverTimer = setTimeout(() => {
@@ -198,26 +270,10 @@
 
 
 <div bind:this={mapContainer} />
-<div class='legend-container'>
-	<h4>Map Legend</h4>
-	<svg>
-		<g bind:this={legend} />
-	</svg>
-</div>
+{#if maxCount}
+	<Legend {minMarkerSize} {maxMarkerSize} {maxCount} />
+{/if}
+
 
 <style lang='scss'>
-	.legend-container {
-		background-color: rgba(255,255,255,0.7);
-		bottom: 20px;
-		font-size: 14px;
-		height: 125px;
-		position: absolute;
-		padding: 15px;
-		right: 20px;
-		width: 175px;
-		z-index: 2;
-		svg g {
-			transform: translate(7px, 7px);
-		}
-	}
 </style>
