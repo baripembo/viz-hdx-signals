@@ -28,7 +28,6 @@
     updateFeatures();
 	}
 
-
 	onMount(() => {
 		//calculate available space for map
 		let mapHeight = 700;
@@ -39,7 +38,8 @@
 	    container: mapContainer,
 	    style: `mapbox://styles/humdata/cl3lpk27k001k15msafr9714b`,
 	    center: center,
-	    zoom: zoom
+	    zoom: zoom,
+	    maxZoom: 6
 	  });
 
 	  map.addControl(new mapboxgl.NavigationControl({showCompass: false}))
@@ -60,7 +60,6 @@
 		  loadFeatures();
 	  });
 	});
-
 
 	// function initPolys() {
 	//   //data join
@@ -187,22 +186,27 @@
 	    // content += `<img class="plot" src="${prop.plot_url}" />`;
 	    // content += `${prop.further_information}`;
 
-	    let alertDate = dateFormat(new Date(currentSignals[0].date));
 	    let numSignals = getNumAlerts(currentSignals[0].iso3)[0].alert_count;
 	    let content = `<h2>${currentSignals[0].country} <span>(${numSignals} ${numSignals>1 ? 'signals' : 'signal'})</span></h2>`;
 
+	    content += '<div class="signal-container">';
 	    currentSignals.forEach(function(signal) {
-		    content += `<div class="signal">${alertDate}<br>`;
-		    content += `<div class="alert-table"><div>Indicator: <span class="stat">${signal.indicator_name}</span></div>`;
-		    content += `<div class="alert-level ${signal.alert_level.split(' ')[0]}">${signal.alert_level}</div></div>`;
+	    	let signalDate = dateFormat(new Date(signal.date));
+		    content += `<div class="signal">${signalDate}<br>`;
+		    content += `<span class="stat">${signal.indicator_name}</span>, ${signal.alert_level}<br>`;
 		    content += `<img class="plot" src="${signal.plot_url}" />`;
 		    content += `${signal.further_information}</div>`;
 	    })
+	    content += '</div>';
 	    tooltip.setHTML(content);
 	    tooltip
 	      .addTo(map)
 	      .setLngLat(e.lngLat);
 	  });
+
+
+	  //zoom map to marker bounds
+	  zoomToBounds();
 	}
 
 	function updateFeatures() {
@@ -232,6 +236,20 @@
 			}
 	  	map.getSource('signals-source').setData(signalsGeoData);
 	  }
+
+	  //zoom map to marker bounds
+	  zoomToBounds();
+	}
+
+	function zoomToBounds() {
+		//zoom map to bounds
+		if (signalsGeoData !== undefined) {
+		  let bounds = new mapboxgl.LngLatBounds();
+			signalsGeoData.features.forEach(function(feature) {
+			  bounds.extend(feature.geometry.coordinates);
+			});
+			map.fitBounds(bounds, {padding: {top: 100, right: 100, bottom: 200, left: 200}});
+		}
 	}
 
 	function getNumAlerts(iso3) {
