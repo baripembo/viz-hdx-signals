@@ -1,6 +1,5 @@
 <script>
   import * as d3 from 'd3';
-  import { onMount, onDestroy } from 'svelte';
 
   export let maxCount;
   export let maxMarkerSize;

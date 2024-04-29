@@ -1,10 +1,14 @@
 <script>
   import * as d3 from 'd3';
-  import { sliderRight } from 'd3-simple-slider';
   import Papa from 'papaparse'
   import { onMount } from 'svelte';
   import KeyFigure from './lib/KeyFigure.svelte'
+  import Slider from './lib/Slider.svelte';
+  import { sliderRight } from 'd3-simple-slider';
   import Map from './lib/Map.svelte'
+  
+  let p = 'MyName'
+  $: nameUpper = p.toUpperCase()
 
   let data, dateSlider, dates, regions, indicators;
   let filters = {};
@@ -65,34 +69,16 @@
   function onRegionSelect(e) {
     filters.region = (e.target.value=='All Regions') ? '' : e.target.value;
     filterData();
-    // if (e.target.value == 'All Regions') {
-    //   signalsData = data;
-    // }
-    // else {
-    //   signalsData = data.filter(d => d.region == e.target.value);
-    // }
   }
 
   function onIndicatorSelect(e) {
     filters.indicator_name = (e.target.value=='All Indicators') ? '' : e.target.value.toLowerCase();
     filterData();
-    // if (e.target.value == 'All Indicators') {
-    //   signalsData = data;
-    // }
-    // else {
-    //   signalsData = data.filter(d => d.indicator_name.toLowerCase() == e.target.value);
-    // }
   }
 
   function onHRPSelect(e) {
     filters.hrp_country = (e.target.checked) ? 'TRUE' : '';
     filterData();
-    // if (e.target.checked) {
-    //   signalsData = data.filter(d => d.hrp_country == 'TRUE');
-    // }
-    // else {
-    //   signalsData = data;
-    // }
   }
 
   function onDateSelect(dateSelect) {
@@ -100,10 +86,6 @@
     let endTime = new Date(dateSelect[1]).getTime();
     filters.date = [startTime, endTime];
     filterData();
-    // signalsData = data.filter((d) => {
-    //   let signalTime = new Date(d.date).getTime();
-    //   return signalTime >= startTime && signalTime <= endTime;
-    // });
   }
 
   function filterData() {
@@ -120,18 +102,10 @@
           if (value!=='' && value!==d[key])
             validSignal = false;
         }
-        // if (Array.isArray(value)) {
-        //   if (!value.includes(d[key])) {
-        //     validSignal = false;
-        //   }
-        // }
         // else if (typeof value === 'function') {
         //   if (!value(d[key])) {
         //     validSignal = false;
         //   }
-        // }
-        // else {
-        //   if (value !== d[key]) validSignal = false;
         // }
       }
       return validSignal;
@@ -164,6 +138,12 @@
     {/if}
 
     <input type='checkbox' id='onlyHRP' on:change={onHRPSelect}> Only HRP
+
+<!--     <Slider bind:person={p} />
+
+    <p>Reactive value in the parent component: {nameUpper}</p>
+ -->
+
   </div>
   <div class='slider-container'>
     <div class='slider' bind:this={dateSlider} />

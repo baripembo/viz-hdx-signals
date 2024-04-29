@@ -12,13 +12,12 @@
 	export let center = [20, 10];
 	export let zoom = 2;
 
-	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, maxCount;
+	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, maxCount, fHover;
 
-	let colorRange = ['#C25048','#F2645A','#F7A29C','#FCE0DE'];
 	let tooltip = d3.select('.tooltip');
 	let numFormat = d3.format(',');
 	let dateFormat = d3.utcFormat('%b %d, %Y');
-
+	let mapHeight = 700;
 	let minMarkerSize = 10;
 	let maxMarkerSize = 18;	
 
@@ -29,8 +28,6 @@
 	}
 
 	onMount(() => {
-		//calculate available space for map
-		let mapHeight = 700;
 		mapContainer.style.height = mapHeight + 'px';
 
 		//init map
@@ -157,7 +154,12 @@
 	      'circle-stroke-color': '#F2645A',
 	      'circle-opacity': 0.6,
 	      'circle-radius': sizeScale,
-	      'circle-stroke-width': 1,
+	      'circle-stroke-width': [
+          'case',
+          ['boolean', ['feature-state', 'hover'], false],
+          2,
+          1
+        ]
 	    }
 	  });
 
@@ -171,37 +173,14 @@
 	  // map.setPaintProperty('wrl polbnda 1m', 'fill-color', expression);
 
 	  //mouse events
-	  map.on('mouseenter', 'signal-dots', onMouseEnter);
-	  map.on('mouseleave', 'signal-dots', onMouseLeave);
-	  map.on('mousemove', 'signal-dots', function(e) {
-	    map.getCanvas().style.cursor = 'pointer';
-	    // let prop = e.features[0].properties;
-	    // let alertDate = dateFormat(new Date(prop.date));
-	    // let content = `<h2>${prop.country}</h2>`;
-	    // content += `${alertDate}<br>`;
-	    // content += `<div class="alert-table"><div>Indicator: <span class="stat">${prop.indicator_name}</span></div>`;
-	    // content += `<div class="alert-level ${prop.alert_level.split(' ')[0]}">${prop.alert_level}</div></div>`;
-	    // // content += `Value: <span class="stat">${numFormat(prop.value)}</span><br>`;
-	    // // content += `Source: <span class="stat"><a href='${prop.source_url}' target='_blank'>${prop.indicator_source}</a></span><br>`;
-	    // content += `<img class="plot" src="${prop.plot_url}" />`;
-	    // content += `${prop.further_information}`;
-
-	    let numSignals = getNumAlerts(currentSignals[0].iso3)[0].alert_count;
-	    let content = `<h2>${currentSignals[0].country} <span>(${numSignals} ${numSignals>1 ? 'signals' : 'signal'})</span></h2>`;
-
-	    content += '<div class="signal-container">';
-	    currentSignals.forEach(function(signal) {
-	    	let signalDate = dateFormat(new Date(signal.date));
-		    content += `<div class="signal">${signalDate}<br>`;
-		    content += `<span class="stat">${signal.indicator_name}</span>, ${signal.alert_level}<br>`;
-		    content += `<img class="plot" src="${signal.plot_url}" />`;
-		    content += `${signal.further_information}</div>`;
-	    })
-	    content += '</div>';
-	    tooltip.setHTML(content);
-	    tooltip
-	      .addTo(map)
-	      .setLngLat(e.lngLat);
+	  // map.on('mouseenter', 'signal-dots', onMouseEnter);
+	  // map.on('mouseleave', 'signal-dots', onMouseLeave);
+	  map.on('mouseenter', 'signal-dots', (e) => {
+       mouseover(e.features[0]);
+    });
+    map.on('mouseleave', 'signal-dots', mouseout);
+	  map.on('click', 'signal-dots', (e) => {
+	  	mouseclick(e);
 	  });
 
 
@@ -266,20 +245,69 @@
 	}
 
 	//mouse event/leave events
-	function onMouseEnter(e) {
-		//clearTimeout(hoverTimer);
+	// function onMouseEnter(e) {
+	// 	//clearTimeout(hoverTimer);
+	// 	let iso3 = e.features[0].properties.iso3;
+	// 	currentSignals = getAlerts(iso3);
+
+	//   map.getCanvas().style.cursor = 'pointer';
+	//   tooltip.addTo(map);
+	// }
+	// function onMouseLeave(e) {
+	// 	// hoverTimer = setTimeout(() => {
+	// 	//   map.getCanvas().style.cursor = '';
+	// 	//   tooltip.remove();
+	// 	// }, 2000);
+	// }
+
+
+	function mouseover(feature) {
+    fHover = feature;
+    map.getCanvasContainer().style.cursor = 'pointer';
+
+    map.setFeatureState({
+      source: 'signals-source',
+      id: fHover.id
+    }, {
+      hover: true
+    });
+  }
+
+  function mouseout() {
+    if (!fHover) return;
+    map.getCanvasContainer().style.cursor = '';
+    map.setFeatureState({
+      source: 'signals-source',
+      id: fHover.id
+    }, {
+      hover: false
+    });
+    fHover = null;
+  }
+
+  function mouseclick(e) {
 		let iso3 = e.features[0].properties.iso3;
 		currentSignals = getAlerts(iso3);
 
-	  map.getCanvas().style.cursor = 'pointer';
-	  tooltip.addTo(map);
-	}
-	function onMouseLeave(e) {
-		// hoverTimer = setTimeout(() => {
-		//   map.getCanvas().style.cursor = '';
-		//   tooltip.remove();
-		// }, 2000);
-	}
+    let numSignals = getNumAlerts(currentSignals[0].iso3)[0].alert_count;
+    let content = `<h2>${currentSignals[0].country} <span>(${numSignals} ${numSignals>1 ? 'signals' : 'signal'})</span></h2>`;
+
+    content += '<div class="signal-container">';
+    currentSignals.forEach(function(signal) {
+    	let signalDate = dateFormat(new Date(signal.date));
+	    content += `<div class="signal">${signalDate}<br>`;
+	    content += `<span class="stat">${signal.indicator_name}</span>, ${signal.alert_level}<br>`;
+	    content += `<img class="plot" src="${signal.plot_url}" />`;
+	    content += `${signal.further_information}</div>`;
+    })
+    content += '</div>';
+    tooltip.setHTML(content);
+    tooltip
+      .addTo(map)
+      .setLngLat(e.lngLat);
+  }
+
+
 
 	onDestroy(() => {
 	  map.remove();
