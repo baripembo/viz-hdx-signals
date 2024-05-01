@@ -15,7 +15,7 @@
   
   $: signalsData = [];
 
-  Papa.parse('cholera_signals.csv', {
+  Papa.parse('signals.csv', {
     header: true,
     download: true,
     complete: function(results) {
@@ -45,8 +45,8 @@
       .min(d3.min(dates))
       .max(d3.max(dates))
       .tickFormat(d3.utcFormat('%b %d, %Y'))
-      .tickValues(dates)
-      .marks(dates)
+      //.tickValues(dates)
+      //.marks(dates)
       .default([dates[dates.length-1], dates[0]])
       .width(150)
       .height(sliderHeight-50)
@@ -131,7 +131,7 @@
         <select on:change={onIndicatorSelect}>
           <option value={'All Indicators'}>{'All Indicators'}</option>
           {#each indicators as indicator}
-            <option value={indicator}>{indicator}</option>
+            <option value={indicator}>{indicator.replace('_', ' ')}</option>
           {/each}
         </select>
       </div>

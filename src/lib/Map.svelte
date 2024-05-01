@@ -12,14 +12,16 @@
 	export let center = [20, 10];
 	export let zoom = 2;
 
-	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, maxCount, fHover;
+	$: maxCount = 0;
+
+	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, fHover;
 
 	let tooltip = d3.select('.tooltip');
 	let numFormat = d3.format(',');
 	let dateFormat = d3.utcFormat('%b %d, %Y');
 	let mapHeight = 700;
-	let minMarkerSize = 10;
-	let maxMarkerSize = 18;	
+	let minMarkerSize = 5;
+	let maxMarkerSize = 20;	
 
 	let data = signalsData;
 	$: if (data != signalsData) {  
@@ -36,6 +38,7 @@
 	    style: `mapbox://styles/humdata/cl3lpk27k001k15msafr9714b`,
 	    center: center,
 	    zoom: zoom,
+	    minZoom: 1,
 	    maxZoom: 6
 	  });
 
@@ -134,7 +137,7 @@
 	  });
 
 		//create size scale for markers
-		maxCount = d3.max(countByCountry, d => d.alert_count)
+		maxCount = d3.max(countByCountry, d => d.alert_count);
 		let sizeScale = [
       'interpolate',
       ['linear'],
@@ -146,7 +149,7 @@
 
 		//add signal markers
 	  map.addLayer({
-	    id: 'signal-dots',
+	    id: 'signals-dots',
 	    type: 'circle',
 	    source: 'signals-source',
 	    paint: {
@@ -173,13 +176,13 @@
 	  // map.setPaintProperty('wrl polbnda 1m', 'fill-color', expression);
 
 	  //mouse events
-	  // map.on('mouseenter', 'signal-dots', onMouseEnter);
-	  // map.on('mouseleave', 'signal-dots', onMouseLeave);
-	  map.on('mouseenter', 'signal-dots', (e) => {
+	  // map.on('mouseenter', 'signals-dots', onMouseEnter);
+	  // map.on('mouseleave', 'signals-dots', onMouseLeave);
+	  map.on('mouseenter', 'signals-dots', (e) => {
        mouseover(e.features[0]);
     });
-    map.on('mouseleave', 'signal-dots', mouseout);
-	  map.on('click', 'signal-dots', (e) => {
+    map.on('mouseleave', 'signals-dots', mouseout);
+	  map.on('click', 'signals-dots', (e) => {
 	  	mouseclick(e);
 	  });
 
@@ -190,34 +193,51 @@
 
 	function updateFeatures() {
 		if (map.getSource('signals-source')) {
-	  	countByCountry = Object.values(data.reduce((a, {iso3, lat, lon}) => {
-			  a[iso3] = a[iso3] || {iso3, alert_count: 0, lat, lon};
-			  a[iso3].alert_count++;
-			  return a;
-			}, Object.create(null)));
+			map.removeLayer('signals-dots');
+			map.removeSource('signals-source');
+			loadFeatures();
+		}
+		// if (map.getSource('signals-source')) {
+	  // 	countByCountry = Object.values(data.reduce((a, {iso3, lat, lon}) => {
+		// 	  a[iso3] = a[iso3] || {iso3, alert_count: 0, lat, lon};
+		// 	  a[iso3].alert_count++;
+		// 	  return a;
+		// 	}, Object.create(null)));
 
-			let signals = [];
-			countByCountry.forEach(function(signal, i) {
-				signals.push({
-					'type': 'Feature',
-					'geometry': {
-						'type': 'Point',
-						'coordinates': [signal.lon, signal.lat]
-					},
-					'properties': signal
-				});
-			});
+		// 	let signals = [];
+		// 	countByCountry.forEach(function(signal, i) {
+		// 		signals.push({
+		// 			'type': 'Feature',
+		// 			'geometry': {
+		// 				'type': 'Point',
+		// 				'coordinates': [signal.lon, signal.lat]
+		// 			},
+		// 			'properties': signal
+		// 		});
+		// 	});
 
-			//update geojson
-			signalsGeoData = {
-				'type': 'FeatureCollection',
-				'features': signals
-			}
-	  	map.getSource('signals-source').setData(signalsGeoData);
-	  }
+		// 	//update size scale for markers
+		// 	maxCount = d3.max(countByCountry, d => d.alert_count);
+		// 	console.log('maxCount', maxCount)
+		// 	let sizeScale = [
+	  //     'interpolate',
+	  //     ['linear'],
+	  //     ['get', 'alert_count'],
+	  //     1, minMarkerSize,
+	  //     maxCount,
+	  //     maxMarkerSize
+	  //   ];
 
-	  //zoom map to marker bounds
-	  zoomToBounds();
+		// 	//update geojson
+		// 	signalsGeoData = {
+		// 		'type': 'FeatureCollection',
+		// 		'features': signals
+		// 	}
+	  // 	map.getSource('signals-source').setData(signalsGeoData);
+	  // }
+
+	  // //zoom map to marker bounds
+	  // zoomToBounds();
 	}
 
 	function zoomToBounds() {
@@ -227,7 +247,7 @@
 			signalsGeoData.features.forEach(function(feature) {
 			  bounds.extend(feature.geometry.coordinates);
 			});
-			map.fitBounds(bounds, {padding: {top: 100, right: 100, bottom: 200, left: 200}});
+			map.fitBounds(bounds, {padding: {top: 100, right: 100, bottom: 200, left: 200}, duration: 500});
 		}
 	}
 
@@ -296,9 +316,10 @@
     currentSignals.forEach(function(signal) {
     	let signalDate = dateFormat(new Date(signal.date));
 	    content += `<div class="signal">${signalDate}<br>`;
-	    content += `<span class="stat">${signal.indicator_name}</span>, ${signal.alert_level}<br>`;
-	    content += `<img class="plot" src="${signal.plot_url}" />`;
-	    content += `${signal.further_information}</div>`;
+	    content += `<span class="stat">${signal.indicator_name.replace('_', ' ')}</span>, ${signal.alert_level}<br>`;
+	    if (signal.plot_url!=='NA') content += `<img class="plot" src="${signal.plot_url}" />`;
+	    if (signal.plot_url!=='NA') content += `${signal.further_information}`;
+	    content += '</div>';
     })
     content += '</div>';
     tooltip.setHTML(content);
