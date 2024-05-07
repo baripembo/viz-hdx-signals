@@ -4,7 +4,7 @@
   import { onMount } from 'svelte';
   import KeyFigure from './lib/KeyFigure.svelte'
   import Slider from './lib/Slider.svelte';
-  import { sliderRight } from 'd3-simple-slider';
+  import { sliderRight, sliderHorizontal } from 'd3-simple-slider';
   import Map from './lib/Map.svelte'
   
   let p = 'MyName'
@@ -20,10 +20,17 @@
     header: true,
     download: true,
     complete: function(results) {
+      //get latest date
+      results.data.sort(function(a,b) {
+        return new Date(b.date) - new Date(a.date);
+      });
+      let latestDate = new Date(results.data[0].date);
+      console.log(latestDate)
 
       //get list of dates -- restrict to 3 months
-      let startDate = new Date();
+      let startDate = latestDate;
       startDate.setMonth(startDate.getMonth() - 3);
+      console.log(startDate)
 
       data = results.data.filter(d => d.iso3 !== '' && new Date(d.date).getTime() >= startDate.getTime());
 
@@ -49,13 +56,13 @@
       //get list of regions
       let regionArray = signalsData.map(d => d.region);
       regionArray.unshift('All Regions');
-      regions = [... new Set(regionArray)];
+      regions = [... new Set(regionArray)].sort();
     }
     if (filters.indicator_name=='') {
       //get list of indicators
       let indicatorArray = signalsData.map(d => d.indicator_name);
       indicatorArray.unshift('All Indicators');
-      indicators = [... new Set(indicatorArray)];
+      indicators = [... new Set(indicatorArray)].sort();
     }
   }
 
@@ -63,16 +70,18 @@
     const sliderHeight = 580;
     dates = dates.sort((a, b) => a.getTime() - b.getTime());
 
-    const slider = sliderRight()
+    const slider = sliderHorizontal()
       .min(d3.min(dates))
       .max(d3.max(dates))
-      .tickFormat(d3.utcFormat('%b %d, %Y'))
-      .tickValues(dates)
-      .marks(dates)
+      //.tickFormat(d3.utcFormat('%b %d, %Y'))
+      .tickFormat(d3.utcFormat('%b %Y'))
+      .ticks(5)
+      //.tickValues(dates)
+      //.marks(dates)
       .default([dates[dates.length-1], dates[0]])
-      .width(150)
-      .height(sliderHeight-50)
-      .handle(d3.symbol().type(d3.symbolCircle).size(150)())
+      .width(200)
+      //.height(sliderHeight-50)
+      .handle(d3.symbol().type(d3.symbolCircle).size(200)())
       .fill('#007CE0')
       .on('end', (val) => {
         onDateSelect(val)
@@ -80,8 +89,8 @@
 
     const g = d3.select(dateSlider)
       .append('svg')
-      .attr('width', 150)
-      .attr('height', sliderHeight)
+      .attr('width', 250)
+      .attr('height', 70)
       .append('g')
       .attr('transform', 'translate(25,25)');
 
@@ -91,35 +100,11 @@
   function onRegionSelect(e) {
     filters.region = (e.target.value=='All Regions') ? '' : e.target.value;
     filterData();
-
-    // if (filters.indicator_name=='') {
-    //   //get list of indicators
-    //   let indicatorArray = signalsData.map(d => d.indicator_name);
-    //   indicatorArray.unshift('All Indicators');
-    //   indicators = [... new Set(indicatorArray)];
-    // }
-    // if (filters.region=='') {
-    //   let regionArray = signalsData.map(d => d.region);
-    //   regionArray.unshift('All Regions');
-    //   regions = [... new Set(regionArray)];
-    // }
   }
 
   function onIndicatorSelect(e) {
     filters.indicator_name = (e.target.value=='All Indicators') ? '' : e.target.value.toLowerCase();
     filterData();
-
-    // if (filters.region=='') {
-    //   let regionArray = signalsData.map(d => d.region);
-    //   regionArray.unshift('All Regions');
-    //   regions = [... new Set(regionArray)];
-    // }
-    // if (filters.indicator_name=='') {
-    //   //get list of indicators
-    //   let indicatorArray = signalsData.map(d => d.indicator_name);
-    //   indicatorArray.unshift('All Indicators');
-    //   indicators = [... new Set(indicatorArray)];
-    // }
   }
 
   function onHRPSelect(e) {
@@ -206,11 +191,11 @@
 
     <p>Reactive value in the parent component: {nameUpper}</p>
  -->
-
+    <div class='slider-container'>
+      <div class='slider' bind:this={dateSlider} />
+    </div>
   </div>
-  <div class='slider-container'>
-    <div class='slider' bind:this={dateSlider} />
-  </div>
+  
   <div class='map'>
     <Map bind:this={map} {signalsData} />
   </div>
@@ -221,14 +206,17 @@
     position: relative;
   }
   .filters {
-    align-items: baseline;
+    align-items: center;
     display: flex;
   }
+  // .slider-container {
+  //   background-color: rgba(255,255,255,0.7);
+  //   height: 100%;
+  //   position: absolute;
+  //   width: 150px;
+  //   z-index: 3;
+  // }
   .slider-container {
-    background-color: rgba(255,255,255,0.7);
-    height: 100%;
-    position: absolute;
-    width: 150px;
-    z-index: 3;
+
   }
 </style>

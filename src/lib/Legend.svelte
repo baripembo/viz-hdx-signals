@@ -9,8 +9,9 @@
   let width = 125;
   let xCircle = 25;
   let xLabel = 75;
-  let yCircle = 40;
+  let yCircle = 35;
   let xLine = 30;
+  let yOffset = 13;
   $: data = (maxCount<=2) ? [1] : [1, round(maxCount/2), round(maxCount)]
 
   //marker scale
@@ -29,9 +30,9 @@
   <h4>Number of Signals</h4>
   <svg {width} {height}>
     {#each data as d, i}
-      <circle cx={xCircle} cy={yCircle - (7*i)} r={size(d)}></circle>
-      <line x1={xLine + (5*i)} x2={xLabel} y1={yCircle - (15*i)} y2={yCircle - (15*i)}></line>
-      <text x={xLabel} y={yCircle - (15*i)}>{d}</text>
+      <circle cx={xCircle} cy={yCircle - (5*i)} r={size(d)}></circle>
+      <line x1={xLine + (5*i)} x2={xLabel} y1={yCircle - (yOffset*i)} y2={yCircle - (yOffset*i)}></line>
+      <text x={xLabel} y={yCircle - (yOffset*i)}>{d}</text>
     {/each}
   </svg>
 </div>

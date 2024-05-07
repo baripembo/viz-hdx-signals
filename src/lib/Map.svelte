@@ -18,7 +18,7 @@
 	let numFormat = d3.format(',');
 	let dateFormat = d3.utcFormat('%b %d, %Y');
 	let mapHeight = 600;
-	let minMarkerSize = 5;
+	let minMarkerSize = 8;
 	let maxMarkerSize = 20;	
 
 	let data = signalsData;
@@ -260,7 +260,7 @@
 			signalsGeoData.features.forEach(function(feature) {
 			  bounds.extend(feature.geometry.coordinates);
 			});
-			map.fitBounds(bounds, {padding: {top: 100, right: 100, bottom: 200, left: 200}, duration: 500});
+			map.fitBounds(bounds, {padding: {top: 100, right: 100, bottom: 200, left: 100}, duration: 500});
 		}
 	}
 
@@ -340,8 +340,6 @@
       .addTo(map)
       .setLngLat(e.lngLat);
   }
-
-
 
 	onDestroy(() => {
 	  map.remove();
