@@ -14,12 +14,10 @@
 
 	$: maxCount = 0;
 
-	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, fHover;
-
-	let tooltip = d3.select('.tooltip');
+	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, fHover, tooltip, tooltipError;
 	let numFormat = d3.format(',');
 	let dateFormat = d3.utcFormat('%b %d, %Y');
-	let mapHeight = 700;
+	let mapHeight = 600;
 	let minMarkerSize = 5;
 	let maxMarkerSize = 20;	
 
@@ -27,6 +25,14 @@
 	$: if (data != signalsData) {  
 		data = signalsData;
     updateFeatures();
+	}
+
+	export const showPopup = (msg) => {
+		console.log('showPopup', tooltip)
+    tooltipError.setHTML(msg);
+    tooltipError
+      .addTo(map)
+    	.setLngLat(map.getCenter());
 	}
 
 	onMount(() => {
@@ -50,6 +56,13 @@
 			closeOnClick: true,
 			closeOnMove: true,
 			className: 'map-tooltip'
+		});
+
+		tooltipError = new mapboxgl.Popup({
+			closeButton: true,
+			closeOnClick: true,
+			closeOnMove: true,
+			className: 'map-tooltip-error'
 		});
 
 	  map.on('load', function() {
@@ -138,7 +151,7 @@
 
 		//create size scale for markers
 		maxCount = d3.max(countByCountry, d => d.alert_count);
-		let sizeScale = [
+		let sizeScale = (maxCount<=1) ? minMarkerSize : [
       'interpolate',
       ['linear'],
       ['get', 'alert_count'],

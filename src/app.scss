@@ -145,7 +145,6 @@ select {
   height: 48px;
   padding: 0 20px;
   position: relative;
-  text-transform: capitalize;
   width: 100%;
 }
 
@@ -158,17 +157,22 @@ select {
 .map {
   position: relative;
 }
-.mapboxgl-popup.map-tooltip {
+.map-tooltip,
+.map-tooltip-error {
   z-index: 3;
   .mapboxgl-popup-content {
     border-radius: 8px;
     box-shadow: 0 0 8px rgba(0,0,0,.3);
     font-family: 'Source Sans 3', sans-serif;
-    font-size: 14px;
     font-weight: normal;
+    padding: 15px;
+  }
+}
+.map-tooltip {
+  .mapboxgl-popup-content {
+    font-size: 14px;
     line-height: 18px;
     height: 324px;
-    padding: 15px;
     width: 430px;
     .plot {
       width: 400px;
@@ -198,6 +202,14 @@ select {
     }
   }
 }
+.map-tooltip-error {
+  .mapboxgl-popup-content {
+    font-size: 16px;
+    line-height: 20px;
+    padding-top: 25px;
+  }
+}
+
 .mapboxgl-popup-close-button {
   font-size: 25px;
 }

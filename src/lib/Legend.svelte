@@ -8,9 +8,10 @@
   let height = 175;
   let width = 125;
   let xCircle = 25;
-  let xLabel = width - 50;
-  let yCircle = 45;
-  $: data = [1, round(maxCount/2), round(maxCount)]
+  let xLabel = 75;
+  let yCircle = 40;
+  let xLine = 30;
+  $: data = (maxCount<=2) ? [1] : [1, round(maxCount/2), round(maxCount)]
 
   //marker scale
   $: size = d3.scaleLinear()
@@ -26,25 +27,12 @@
 
 <div class='legend-container'>
   <h4>Number of Signals</h4>
-<!--   <svg {width} {height}>
-    {#each data as d}
-      <circle cx={xCircle} cy={yCircle - size(d)} r={size(d)}></circle>
-      <line x1={xCircle + size(d)} x2={xLabel} y1={yCircle - size(d*2)} y2={yCircle - size(d*2)}></line>
-      <text x={xLabel} y={yCircle - size(d*2)}>{d}</text>
+  <svg {width} {height}>
+    {#each data as d, i}
+      <circle cx={xCircle} cy={yCircle - (7*i)} r={size(d)}></circle>
+      <line x1={xLine + (5*i)} x2={xLabel} y1={yCircle - (15*i)} y2={yCircle - (15*i)}></line>
+      <text x={xLabel} y={yCircle - (15*i)}>{d}</text>
     {/each}
-  </svg> -->
-  <svg width="125" height="175" class="s-9IbsL3aTMVcY">
-    <circle cx="25" cy="40" r="5" class="s-9IbsL3aTMVcY"></circle>
-    <line x1="30" x2="75" y1="40" y2="40" class="s-9IbsL3aTMVcY"></line>
-    <text x="75" y="40" class="s-9IbsL3aTMVcY">{data[0]}</text>
-
-    <circle cx="25" cy="32" r="14" class="s-9IbsL3aTMVcY"></circle>
-    <line x1="35" x2="75" y1="24" y2="24" class="s-9IbsL3aTMVcY"></line>
-    <text x="75" y="24" class="s-9IbsL3aTMVcY">{data[1]}</text>
-
-    <circle cx="25" cy="24" r="21" class="s-9IbsL3aTMVcY"></circle>
-    <line x1="40" x2="75" y1="7" y2="7" class="s-9IbsL3aTMVcY"></line>
-    <text x="75" y="7" class="s-9IbsL3aTMVcY">{data[2]}</text>
   </svg>
 </div>
 

@@ -10,43 +10,65 @@
   let p = 'MyName'
   $: nameUpper = p.toUpperCase()
 
-  let data, dateSlider, dates, regions, indicators;
-  let filters = {};
+  let data, map, dateSlider, dates, regions, indicators;
+  let filters = {region: '', indicator_name: ''};
   
   $: signalsData = [];
+  $: hasHRP = true;
 
   Papa.parse('signals.csv', {
     header: true,
     download: true,
     complete: function(results) {
-      data = results.data.filter(d => d.iso3 !== '');
-      dates = data.map(d => new Date(d.date));
-      
-      //get list of regions
-      let regionArray = data.map(d => d.region);
-      regions = [... new Set(regionArray)];
-      
-      //get list of indicators
-      let indicatorArray = data.map(d => d.indicator_name);
-      indicators = [... new Set(indicatorArray)];
+
+      //get list of dates -- restrict to 3 months
+      let startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 3);
+
+      data = results.data.filter(d => d.iso3 !== '' && new Date(d.date).getTime() >= startDate.getTime());
 
       //keep local copy of full dataset
       signalsData = data;
+      console.log(signalsData);
+
+      // dates = data.filter(d => {
+      //   if (new Date(d.date).getTime() >= startDate.getTime()) console.log(new Date(d.date))
+      //   return (new Date(d.date).getTime() >= startDate.getTime())
+      // });
+      dates = signalsData.map(d => new Date(d.date));
+      
+      createFilters();
 
       createDateSlider();
     }
   })
 
+  function createFilters() {
+    console.log(filters)
+    if (filters.region=='') {
+      //get list of regions
+      let regionArray = signalsData.map(d => d.region);
+      regionArray.unshift('All Regions');
+      regions = [... new Set(regionArray)];
+    }
+    if (filters.indicator_name=='') {
+      //get list of indicators
+      let indicatorArray = signalsData.map(d => d.indicator_name);
+      indicatorArray.unshift('All Indicators');
+      indicators = [... new Set(indicatorArray)];
+    }
+  }
+
   function createDateSlider() {
-    const sliderHeight = 680;
+    const sliderHeight = 580;
     dates = dates.sort((a, b) => a.getTime() - b.getTime());
 
     const slider = sliderRight()
       .min(d3.min(dates))
       .max(d3.max(dates))
       .tickFormat(d3.utcFormat('%b %d, %Y'))
-      //.tickValues(dates)
-      //.marks(dates)
+      .tickValues(dates)
+      .marks(dates)
       .default([dates[dates.length-1], dates[0]])
       .width(150)
       .height(sliderHeight-50)
@@ -69,11 +91,35 @@
   function onRegionSelect(e) {
     filters.region = (e.target.value=='All Regions') ? '' : e.target.value;
     filterData();
+
+    // if (filters.indicator_name=='') {
+    //   //get list of indicators
+    //   let indicatorArray = signalsData.map(d => d.indicator_name);
+    //   indicatorArray.unshift('All Indicators');
+    //   indicators = [... new Set(indicatorArray)];
+    // }
+    // if (filters.region=='') {
+    //   let regionArray = signalsData.map(d => d.region);
+    //   regionArray.unshift('All Regions');
+    //   regions = [... new Set(regionArray)];
+    // }
   }
 
   function onIndicatorSelect(e) {
     filters.indicator_name = (e.target.value=='All Indicators') ? '' : e.target.value.toLowerCase();
     filterData();
+
+    // if (filters.region=='') {
+    //   let regionArray = signalsData.map(d => d.region);
+    //   regionArray.unshift('All Regions');
+    //   regions = [... new Set(regionArray)];
+    // }
+    // if (filters.indicator_name=='') {
+    //   //get list of indicators
+    //   let indicatorArray = signalsData.map(d => d.indicator_name);
+    //   indicatorArray.unshift('All Indicators');
+    //   indicators = [... new Set(indicatorArray)];
+    // }
   }
 
   function onHRPSelect(e) {
@@ -89,7 +135,7 @@
   }
 
   function filterData() {
-    signalsData = data.filter(d => {
+    let result = data.filter(d => {
       let validSignal = true;
       
       for (const [key, value] of Object.entries(filters)) {
@@ -110,6 +156,25 @@
       }
       return validSignal;
     });
+
+    //set only HRP checkbox status
+    hasHRP = result.some(d => d['hrp_country'] === 'TRUE');
+
+    if (result.length>0) {
+      signalsData = result;
+    }
+    else {
+      map.showPopup(`There are no ${filters.indicator_name.replace('_', ' ')} signals in the ${filters.region} region for this selected time period`);
+    }
+
+    console.log(signalsData)
+    //createFilters();
+  }
+
+  function capitalizeFirstLetter(word) {
+    let firstLetter = word.charAt(0).toUpperCase();
+    let remainingLetters = word.substring(1);
+    return firstLetter + remainingLetters;
   }
 </script>
 
@@ -118,7 +183,6 @@
     {#if regions}
       <div class='select-wrapper'>
         <select on:change={onRegionSelect}>
-          <option value={'All Regions'}>{'All Regions'}</option>
           {#each regions as region}
             <option value={region}>{region}</option>
           {/each}
@@ -129,15 +193,14 @@
     {#if indicators}
       <div class='select-wrapper'>
         <select on:change={onIndicatorSelect}>
-          <option value={'All Indicators'}>{'All Indicators'}</option>
           {#each indicators as indicator}
-            <option value={indicator}>{indicator.replace('_', ' ')}</option>
+            <option value={indicator}>{capitalizeFirstLetter(indicator.replace('_', ' '))}</option>
           {/each}
         </select>
       </div>
     {/if}
 
-    <input type='checkbox' id='onlyHRP' on:change={onHRPSelect}> Only HRP
+    <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> Only HRP
 
 <!--     <Slider bind:person={p} />
 
@@ -149,7 +212,7 @@
     <div class='slider' bind:this={dateSlider} />
   </div>
   <div class='map'>
-    <Map {signalsData} />
+    <Map bind:this={map} {signalsData} />
   </div>
 </main>
 
