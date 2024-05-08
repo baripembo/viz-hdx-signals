@@ -159,6 +159,7 @@
 
 <main>
   <h1>HDX Signals</h1>
+  <h5>Filter by:</h5>
   <div class='filters'>
     {#if regions}
       <div class='select-wrapper'>
@@ -180,14 +181,12 @@
       </div>
     {/if}
 
-    <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> <label for='onlyHRP'>Only HRP</label>
-
-<!--     <Slider bind:person={p} />
-
-    <p>Reactive value in the parent component: {nameUpper}</p>
- -->
     <div class='slider-container'>
       <div class='slider' bind:this={dateSlider} />
+    </div>
+
+    <div class='input-wrapper'>
+      <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> <label for='onlyHRP'>Only HRP countries</label>
     </div>
   </div>
   
@@ -212,6 +211,6 @@
   //   z-index: 3;
   // }
   .slider-container {
-    margin-left: 20px;
+    margin-right: 20px;
   }
 </style>
