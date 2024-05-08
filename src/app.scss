@@ -38,7 +38,7 @@ a {
 body {
   margin: 0 auto;
   display: flex;
-  width: 870px;
+  width: 1170px;
 }
 
 h1 {
@@ -159,6 +159,7 @@ select {
 }
 .map-tooltip,
 .map-tooltip-error {
+  max-width: none !important;
   z-index: 3;
   .mapboxgl-popup-content {
     border-radius: 8px;
@@ -206,7 +207,7 @@ select {
   .mapboxgl-popup-content {
     font-size: 16px;
     line-height: 20px;
-    padding-top: 25px;
+    padding: 25px 35px 25px 25px;
   }
 }
 

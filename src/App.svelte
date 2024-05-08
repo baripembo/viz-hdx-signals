@@ -6,11 +6,8 @@
   import Slider from './lib/Slider.svelte';
   import { sliderRight, sliderHorizontal } from 'd3-simple-slider';
   import Map from './lib/Map.svelte'
-  
-  let p = 'MyName'
-  $: nameUpper = p.toUpperCase()
 
-  let data, map, dateSlider, dates, regions, indicators;
+  let data, map, dateSlider, dates, regions, indicators, latestDate, startDate;
   let filters = {region: '', indicator_name: ''};
   
   $: signalsData = [];
@@ -20,32 +17,25 @@
     header: true,
     download: true,
     complete: function(results) {
-      //get latest date
+      //get latest date in data
       results.data.sort(function(a,b) {
         return new Date(b.date) - new Date(a.date);
       });
-      let latestDate = new Date(results.data[0].date);
-      console.log(latestDate)
+      latestDate = new Date(results.data[0].date);
 
-      //get list of dates -- restrict to 3 months
-      let startDate = latestDate;
+      //set start date 3 months prior to latest date
+      startDate = new Date(latestDate);
       startDate.setMonth(startDate.getMonth() - 3);
-      console.log(startDate)
-
+      
+      //get results within 3 months
       data = results.data.filter(d => d.iso3 !== '' && new Date(d.date).getTime() >= startDate.getTime());
 
-      //keep local copy of full dataset
       signalsData = data;
       console.log(signalsData);
 
-      // dates = data.filter(d => {
-      //   if (new Date(d.date).getTime() >= startDate.getTime()) console.log(new Date(d.date))
-      //   return (new Date(d.date).getTime() >= startDate.getTime())
-      // });
-      dates = signalsData.map(d => new Date(d.date));
+      //dates = signalsData.map(d => new Date(d.date));
       
       createFilters();
-
       createDateSlider();
     }
   })
@@ -67,18 +57,28 @@
   }
 
   function createDateSlider() {
-    const sliderHeight = 580;
-    dates = dates.sort((a, b) => a.getTime() - b.getTime());
+    //const sliderHeight = 580;
+    //dates = dates.sort((a, b) => a.getTime() - b.getTime());
+    const listLength = 4; // months
+    const dates = [];
+
+    for(let i = 0; i < listLength; i++) {
+        const itemDate = new Date(startDate); // starting today
+        itemDate.setMonth(itemDate.getMonth() + i);
+        dates.push(itemDate);
+    }
+    console.log('dates',dates)
 
     const slider = sliderHorizontal()
-      .min(d3.min(dates))
-      .max(d3.max(dates))
+      .min(startDate)
+      .max(latestDate)
       //.tickFormat(d3.utcFormat('%b %d, %Y'))
       .tickFormat(d3.utcFormat('%b %Y'))
-      .ticks(5)
-      //.tickValues(dates)
-      //.marks(dates)
-      .default([dates[dates.length-1], dates[0]])
+      //.ticks(3)
+      .step(0.5)
+      .tickValues(dates)
+      .marks(dates)
+      .default([latestDate, startDate])
       .width(200)
       //.height(sliderHeight-50)
       .handle(d3.symbol().type(d3.symbolCircle).size(200)())
@@ -155,15 +155,10 @@
     console.log(signalsData)
     //createFilters();
   }
-
-  function capitalizeFirstLetter(word) {
-    let firstLetter = word.charAt(0).toUpperCase();
-    let remainingLetters = word.substring(1);
-    return firstLetter + remainingLetters;
-  }
 </script>
 
 <main>
+  <h1>HDX Signals</h1>
   <div class='filters'>
     {#if regions}
       <div class='select-wrapper'>
@@ -179,13 +174,13 @@
       <div class='select-wrapper'>
         <select on:change={onIndicatorSelect}>
           {#each indicators as indicator}
-            <option value={indicator}>{capitalizeFirstLetter(indicator.replace('_', ' '))}</option>
+            <option value={indicator}>{map.capitalizeFirstLetter(indicator.replace('_', ' '))}</option>
           {/each}
         </select>
       </div>
     {/if}
 
-    <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> Only HRP
+    <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> <label for='onlyHRP'>Only HRP</label>
 
 <!--     <Slider bind:person={p} />
 
@@ -217,6 +212,6 @@
   //   z-index: 3;
   // }
   .slider-container {
-
+    margin-left: 20px;
   }
 </style>

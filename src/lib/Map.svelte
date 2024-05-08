@@ -2,7 +2,7 @@
 	import mapboxgl from 'mapbox-gl';
 	import * as d3 from 'd3';
 	import { onMount, onDestroy } from 'svelte';
-  import Legend from './Legend.svelte'
+  import Legend from './Legend.svelte';
 	import '../../node_modules/mapbox-gl/dist/mapbox-gl.css'
 
 	mapboxgl.baseApiUrl = 'https://data.humdata.org/mapbox';
@@ -28,11 +28,16 @@
 	}
 
 	export const showPopup = (msg) => {
-		console.log('showPopup', tooltip)
     tooltipError.setHTML(msg);
     tooltipError
       .addTo(map)
     	.setLngLat(map.getCenter());
+	}  
+
+	export const capitalizeFirstLetter = (word) => {
+    let firstLetter = word.replace('_', ' ').charAt(0).toUpperCase();
+    let remainingLetters = word.substring(1);
+    return firstLetter + remainingLetters;
 	}
 
 	onMount(() => {
@@ -45,7 +50,7 @@
 	    center: center,
 	    zoom: zoom,
 	    minZoom: 1,
-	    maxZoom: 6
+	    maxZoom: 5.5
 	  });
 
 	  map.addControl(new mapboxgl.NavigationControl({showCompass: false}))
@@ -160,14 +165,16 @@
       maxMarkerSize
     ];
 
+    let signalColor = '#007CE0';//#F2645A
+
 		//add signal markers
 	  map.addLayer({
 	    id: 'signals-dots',
 	    type: 'circle',
 	    source: 'signals-source',
 	    paint: {
-	      'circle-color': '#F2645A',
-	      'circle-stroke-color': '#F2645A',
+	      'circle-color': signalColor,
+	      'circle-stroke-color': signalColor,
 	      'circle-opacity': 0.6,
 	      'circle-radius': sizeScale,
 	      'circle-stroke-width': [
@@ -260,7 +267,7 @@
 			signalsGeoData.features.forEach(function(feature) {
 			  bounds.extend(feature.geometry.coordinates);
 			});
-			map.fitBounds(bounds, {padding: {top: 100, right: 100, bottom: 200, left: 100}, duration: 500});
+			map.fitBounds(bounds, {padding: {top: 100, right: 80, bottom: 175, left: 80}, duration: 500});
 		}
 	}
 
@@ -329,7 +336,7 @@
     currentSignals.forEach(function(signal) {
     	let signalDate = dateFormat(new Date(signal.date));
 	    content += `<div class="signal">${signalDate}<br>`;
-	    content += `<span class="stat">${signal.indicator_name.replace('_', ' ')}</span>, ${signal.alert_level}<br>`;
+	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}, <span class="alert-level ${signal.alert_level.split(' ')[0]}">${signal.alert_level}</span><br>`;
 	    if (signal.plot_url!=='NA') content += `<img class="plot" src="${signal.plot_url}" />`;
 	    if (signal.plot_url!=='NA') content += `${signal.further_information}`;
 	    content += '</div>';
