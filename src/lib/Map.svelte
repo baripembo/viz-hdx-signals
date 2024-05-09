@@ -59,7 +59,7 @@
 	  tooltip = new mapboxgl.Popup({
 			closeButton: true,
 			closeOnClick: true,
-			closeOnMove: true,
+			//closeOnMove: true,
 			className: 'map-tooltip'
 		});
 

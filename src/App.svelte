@@ -7,7 +7,7 @@
   import { sliderRight, sliderHorizontal } from 'd3-simple-slider';
   import Map from './lib/Map.svelte'
 
-  let data, map, dateSlider, dates, regions, indicators, latestDate, startDate;
+  let data, map, dateSlider, slider, dates, regions, indicators, latestDate, startDate;
   let filters = {region: '', indicator_name: ''};
   
   $: signalsData = [];
@@ -61,15 +61,13 @@
     //dates = dates.sort((a, b) => a.getTime() - b.getTime());
     const listLength = 4; // months
     const dates = [];
-
     for(let i = 0; i < listLength; i++) {
         const itemDate = new Date(startDate); // starting today
         itemDate.setMonth(itemDate.getMonth() + i);
         dates.push(itemDate);
     }
-    console.log('dates',dates)
 
-    const slider = sliderHorizontal()
+    slider = sliderHorizontal()
       .min(startDate)
       .max(latestDate)
       //.tickFormat(d3.utcFormat('%b %d, %Y'))
@@ -119,6 +117,15 @@
     filterData();
   }
 
+  function reset() {
+    d3.select('#regionSelect').node().value = 'All Regions';
+    d3.select('#indicatorSelect').node().value = 'All Indicators';
+    filters = {region: '', indicator_name: ''};
+    console.log(slider.default())
+    d3.select('#onlyHRP').node().checked = false;
+    filterData();
+  }
+
   function filterData() {
     let result = data.filter(d => {
       let validSignal = true;
@@ -163,7 +170,7 @@
   <div class='filters'>
     {#if regions}
       <div class='select-wrapper'>
-        <select on:change={onRegionSelect}>
+        <select on:change={onRegionSelect} id='regionSelect'>
           {#each regions as region}
             <option value={region}>{region}</option>
           {/each}
@@ -173,7 +180,7 @@
 
     {#if indicators}
       <div class='select-wrapper'>
-        <select on:change={onIndicatorSelect}>
+        <select on:change={onIndicatorSelect} id='indicatorSelect'>
           {#each indicators as indicator}
             <option value={indicator}>{map.capitalizeFirstLetter(indicator.replace('_', ' '))}</option>
           {/each}
@@ -188,6 +195,8 @@
     <div class='input-wrapper'>
       <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> <label for='onlyHRP'>Only HRP countries</label>
     </div>
+
+    <!-- <a href='#' class='btn-reset' on:click={reset}>Reset</a> -->
   </div>
   
   <div class='map'>
@@ -212,5 +221,12 @@
   // }
   .slider-container {
     margin-right: 20px;
+  }
+  .btn-reset {
+    margin-left: auto;
+    text-decoration: underline;
+    &:hover {
+      text-decoration: none;
+    }
   }
 </style>
