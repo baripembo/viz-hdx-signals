@@ -14,12 +14,11 @@
 
 	$: maxCount = 0;
 
-	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, fHover, tooltip, tooltipError;
+	let map, mapContainer, mapHeight, signalsGeoData, hoverTimer, currentSignals, countByCountry, fHover, tooltip, tooltipError;
 	let numFormat = d3.format(',');
 	let dateFormat = d3.utcFormat('%b %d, %Y');
-	let mapHeight = 500;
 	let minMarkerSize = 8;
-	let maxMarkerSize = 20;	
+	let maxMarkerSize = 20;
 
 	let data = signalsData;
 	$: if (data != signalsData) {  
@@ -41,6 +40,7 @@
 	}
 
 	onMount(() => {
+		mapHeight = window.innerHeight - 194;//(d3.select('header').node().getBoundingClientRect().height + 50);
 		mapContainer.style.height = mapHeight + 'px';
 
 		//init map

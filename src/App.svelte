@@ -4,11 +4,14 @@
   import { onMount } from 'svelte';
   import KeyFigure from './lib/KeyFigure.svelte'
   import Slider from './lib/Slider.svelte';
-  import { sliderRight, sliderHorizontal } from 'd3-simple-slider';
+  import RangeSlider from 'svelte-range-slider-pips'
   import Map from './lib/Map.svelte'
 
   let data, map, dateSlider, slider, dates, regions, indicators, latestDate, startDate;
   let filters = {region: '', indicator_name: ''};
+
+  let sliderDates = [];
+  let sliderDefault = [0,3];
   
   $: signalsData = [];
   $: hasHRP = true;
@@ -37,6 +40,7 @@
       
       createFilters();
       createDateSlider();
+      console.log('sliderDates',sliderDates)
     }
   })
 
@@ -66,6 +70,7 @@
         itemDate.setMonth(itemDate.getMonth() + i);
         dates.push(itemDate);
     }
+    sliderDates = dates;
 
     slider = sliderHorizontal()
       .min(startDate)
@@ -73,7 +78,7 @@
       //.tickFormat(d3.utcFormat('%b %d, %Y'))
       .tickFormat(d3.utcFormat('%b %Y'))
       //.ticks(3)
-      .step(0.5)
+      .step(1)
       .tickValues(dates)
       .marks(dates)
       .default([latestDate, startDate])
@@ -93,6 +98,8 @@
       .attr('transform', 'translate(25,25)');
 
     g.call(slider);
+
+    //console.log('---',slider.value([latestDate,startDate]))
   }
 
   function onRegionSelect(e) {
@@ -110,18 +117,25 @@
     filterData();
   }
 
-  function onDateSelect(dateSelect) {
-    let startTime = new Date(dateSelect[0]).getTime();
-    let endTime = new Date(dateSelect[1]).getTime();
+  function onDateSelect(e) {
+    const selected = e.detail.values;
+    let startTime = new Date(sliderDates[selected[0]]).getTime();
+    let endTime = new Date(sliderDates[selected[1]]).getTime();
     filters.date = [startTime, endTime];
     filterData();
   }
 
+  //formatter for date slider
+  function formatter(value) {
+    return d3.utcFormat('%b %Y')(sliderDates[value]);
+  }
+
+
   function reset() {
     d3.select('#regionSelect').node().value = 'All Regions';
     d3.select('#indicatorSelect').node().value = 'All Indicators';
-    filters = {region: '', indicator_name: ''};
-    console.log(slider.default())
+    sliderDefault = [0, 3];
+    filters = {region: '', indicator_name: '', date: [startDate, latestDate]};
     d3.select('#onlyHRP').node().checked = false;
     filterData();
   }
@@ -165,39 +179,55 @@
 </script>
 
 <main>
-  <h1>HDX Signals</h1>
-  <h5>Filter by:</h5>
-  <div class='filters'>
-    {#if regions}
-      <div class='select-wrapper'>
-        <select on:change={onRegionSelect} id='regionSelect'>
-          {#each regions as region}
-            <option value={region}>{region}</option>
-          {/each}
-        </select>
-      </div>
-    {/if}
+  <header class='header'>
+    <h1>HDX Signals</h1>
+    <h5>Filter by:</h5>
+    <div class='filters'>
+      {#if regions}
+        <div class='select-wrapper'>
+          <select on:change={onRegionSelect} id='regionSelect'>
+            {#each regions as region}
+              <option value={region}>{region}</option>
+            {/each}
+          </select>
+        </div>
+      {/if}
 
-    {#if indicators}
-      <div class='select-wrapper'>
-        <select on:change={onIndicatorSelect} id='indicatorSelect'>
-          {#each indicators as indicator}
-            <option value={indicator}>{map.capitalizeFirstLetter(indicator.replace('_', ' '))}</option>
-          {/each}
-        </select>
-      </div>
-    {/if}
+      {#if indicators}
+        <div class='select-wrapper'>
+          <select on:change={onIndicatorSelect} id='indicatorSelect'>
+            {#each indicators as indicator}
+              <option value={indicator}>{map.capitalizeFirstLetter(indicator.replace('_', ' '))}</option>
+            {/each}
+          </select>
+        </div>
+      {/if}
 
-    <div class='slider-container'>
-      <div class='slider' bind:this={dateSlider} />
+      <div class='slider-container'>
+        {#if sliderDates.length>0}
+          <RangeSlider
+            all='label'
+            id='dateSlider'
+            pips 
+            max={3}
+            range
+            step={1}
+            bind:values={sliderDefault}
+            {formatter} 
+            on:change={onDateSelect} 
+          />
+        {/if}
+      </div>
+
+      <div class='input-wrapper'>
+        <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> <label for='onlyHRP'>Only countries with a Humanitarian Response Plan</label>
+      </div>
+
+      <a href='#' class='btn-reset' on:click={reset}>Reset</a>
     </div>
 
-    <div class='input-wrapper'>
-      <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> <label for='onlyHRP'>Only HRP countries</label>
-    </div>
-
-    <!-- <a href='#' class='btn-reset' on:click={reset}>Reset</a> -->
-  </div>
+    <!-- <div class='filters-secondary'></div> -->
+  </header>
   
   <div class='map'>
     <Map bind:this={map} {signalsData} />
@@ -208,19 +238,14 @@
   main {
     position: relative;
   }
-  .filters {
+  .filters,
+  .filters-secondary {
     align-items: center;
     display: flex;
   }
-  // .slider-container {
-  //   background-color: rgba(255,255,255,0.7);
-  //   height: 100%;
-  //   position: absolute;
-  //   width: 150px;
-  //   z-index: 3;
-  // }
   .slider-container {
-    margin-right: 20px;
+    margin: 0 40px;
+    width: 250px;
   }
   .btn-reset {
     margin-left: auto;

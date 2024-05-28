@@ -24,6 +24,7 @@ html {
 
 #app {
   width: 100%;
+  height: 100%;
 }
 
 a {
@@ -38,7 +39,12 @@ a {
 body {
   margin: 0 auto;
   display: flex;
-  width: 1170px;
+  height: 100%;
+  overflow: hidden;
+}
+
+header {
+  margin: 0 50px 20px;
 }
 
 h1 {
@@ -145,7 +151,7 @@ select {
   background-color: #FFF;
   border-color: #CCC;
   border-radius: 8px;
-  font: 700 18px 'Source Sans Pro', sans-serif;;
+  font: 700 18px 'Source Sans Pro', sans-serif;
   height: 48px;
   padding: 0 20px;
   position: relative;
@@ -159,6 +165,7 @@ select {
   }
 }
 .map {
+  height: 100%;
   position: relative;
 }
 .map-tooltip,
@@ -177,10 +184,11 @@ select {
   .mapboxgl-popup-content {
     font-size: 14px;
     line-height: 18px;
-    height: 324px;
-    width: 430px;
+    height: auto;
+    max-height: 420px;
+    width: 530px;
     .plot {
-      width: 400px;
+      width: 500px;
     }
     h2 {
       margin-top: 0;
@@ -190,7 +198,8 @@ select {
     }
     .signal-container {
       height: 90%;
-      overflow-y: auto;
+      max-height: 374px;
+      overflow-y: scroll;
     }
     .signal {
       border-bottom: 1px solid #EEE;
@@ -244,4 +253,45 @@ select {
 .axis text,
 .slider text {
   font-size: 12px;
+}
+
+
+#dateSlider {
+  &.rangeSlider {
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 16px;
+    height: 0.4em;
+    .rangeBar {
+      height: 0.4em;
+      background-color: #007CE0;
+    }
+    &.focus {
+      .rangeBar {
+        background-color: #007CE0;
+      }
+    }
+  }
+  .rangeHandle {
+    background: #FFF;
+    border-radius: 50%;
+    border: 2px solid #007CE0;
+    width: 1.1em;
+    height: 1.1em;
+    .rangeNub {
+      display: none
+    }
+  }
+  .rangePips {
+    .pip {
+      color: #CCC;
+      font-size: 14px;
+      &.selected {
+        color: #888;
+        height: 0.4em;
+        .pipVal {
+          top: 0.4em;
+        }
+      }
+    }
+  }
 }
