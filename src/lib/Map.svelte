@@ -180,7 +180,7 @@
 	      'circle-stroke-width': [
           'case',
           ['boolean', ['feature-state', 'hover'], false],
-          2,
+          4,
           1
         ]
 	    }
@@ -217,47 +217,6 @@
 			map.removeSource('signals-source');
 			loadFeatures();
 		}
-		// if (map.getSource('signals-source')) {
-	  // 	countByCountry = Object.values(data.reduce((a, {iso3, lat, lon}) => {
-		// 	  a[iso3] = a[iso3] || {iso3, alert_count: 0, lat, lon};
-		// 	  a[iso3].alert_count++;
-		// 	  return a;
-		// 	}, Object.create(null)));
-
-		// 	let signals = [];
-		// 	countByCountry.forEach(function(signal, i) {
-		// 		signals.push({
-		// 			'type': 'Feature',
-		// 			'geometry': {
-		// 				'type': 'Point',
-		// 				'coordinates': [signal.lon, signal.lat]
-		// 			},
-		// 			'properties': signal
-		// 		});
-		// 	});
-
-		// 	//update size scale for markers
-		// 	maxCount = d3.max(countByCountry, d => d.alert_count);
-		// 	console.log('maxCount', maxCount)
-		// 	let sizeScale = [
-	  //     'interpolate',
-	  //     ['linear'],
-	  //     ['get', 'alert_count'],
-	  //     1, minMarkerSize,
-	  //     maxCount,
-	  //     maxMarkerSize
-	  //   ];
-
-		// 	//update geojson
-		// 	signalsGeoData = {
-		// 		'type': 'FeatureCollection',
-		// 		'features': signals
-		// 	}
-	  // 	map.getSource('signals-source').setData(signalsGeoData);
-	  // }
-
-	  // //zoom map to marker bounds
-	  // zoomToBounds();
 	}
 
 	function zoomToBounds() {
@@ -283,23 +242,6 @@
 		});
 		return alerts;
 	}
-
-	//mouse event/leave events
-	// function onMouseEnter(e) {
-	// 	//clearTimeout(hoverTimer);
-	// 	let iso3 = e.features[0].properties.iso3;
-	// 	currentSignals = getAlerts(iso3);
-
-	//   map.getCanvas().style.cursor = 'pointer';
-	//   tooltip.addTo(map);
-	// }
-	// function onMouseLeave(e) {
-	// 	// hoverTimer = setTimeout(() => {
-	// 	//   map.getCanvas().style.cursor = '';
-	// 	//   tooltip.remove();
-	// 	// }, 2000);
-	// }
-
 
 	function mouseover(feature) {
     fHover = feature;
