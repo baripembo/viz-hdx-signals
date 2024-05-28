@@ -3,7 +3,6 @@
   import Papa from 'papaparse'
   import { onMount } from 'svelte';
   import KeyFigure from './lib/KeyFigure.svelte'
-  import Slider from './lib/Slider.svelte';
   import RangeSlider from 'svelte-range-slider-pips'
   import Map from './lib/Map.svelte'
 
