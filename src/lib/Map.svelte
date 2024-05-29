@@ -158,7 +158,7 @@
 	      'circle-stroke-width': [
           'case',
           ['boolean', ['feature-state', 'hover'], false],
-          4,
+          5,
           1
         ]
 	    }
@@ -174,11 +174,11 @@
 	  // map.setPaintProperty('wrl polbnda 1m', 'fill-color', expression);
 
 	  //mouse events
-	  map.on('mouseenter', 'signals-dots', onMouseEnter);
+	  //map.on('mouseenter', 'signals-dots', onMouseEnter);
 	  // map.on('mouseleave', 'signals-dots', onMouseLeave);
-	  // map.on('mouseenter', 'signals-dots', (e) => {
-    //    mouseover(e.features[0]);
-    // });
+	  map.on('mouseenter', 'signals-dots', (e) => {
+       mouseover(e.features[0]);
+    });
     map.on('mouseleave', 'signals-dots', mouseout);
 	  map.on('click', 'signals-dots', (e) => {
 	  	mouseclick(e);
@@ -243,36 +243,6 @@
       hover: false
     });
     fHover = null;
-  }
-
-  function onMouseEnter(e) {
-		let iso3 = e.features[0].properties.iso3;
-		currentSignals = getAlerts(iso3);
-
-    let numSignals = getNumAlerts(currentSignals[0].iso3)[0].alert_count;
-    let content = `<h2>${currentSignals[0].country} <span>(${numSignals} ${numSignals>1 ? 'signals' : 'signal'})</span></h2>`;
-
-    content += '<div class="signal-container">';
-    currentSignals.forEach(function(signal) {
-    	let signalDate = dateFormat(new Date(signal.date));
-	    content += `<div class="signal">${signalDate}<br>`;
-	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}<br>`;
-	    if (signal.summary_short!=='NA') content += `<p>${signal.summary_short}</p>`;
-	    if (signal.plot_url!=='NA') content += `<img class="plot" src="${signal.plot_url}" />`;
-	    if (signal.map_url!=='NA') content += `<img class="map" src="${signal.map_url}" />`;
-	    if (signal.campaign_url_archive!=='NA') content += `<p><a href="${signal.campaign_url_archive}" target="_blank">Go to the campaign</a></p>`;
-	    if (signal.further_information!=='NA') content += `${signal.further_information}`;
-	    content += '</div>';
-    })
-    content += '</div>';
-    tooltip.setHTML(content);
-    tooltip
-      .addTo(map)
-      .setLngLat(e.lngLat);
-
-    //make sure content is starting at top of scrollable div
-    const signalContainer = d3.select('.signal-container').node();
-  	if (signalContainer) signalContainer.scrollTop = 0;
   }
 
   function mouseclick(e) {
