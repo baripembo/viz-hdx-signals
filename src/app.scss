@@ -200,6 +200,7 @@ select {
     .signal-container {
       height: 90%;
       max-height: 374px;
+      overflow-x: hidden;
       overflow-y: scroll;
     }
     .signal {
