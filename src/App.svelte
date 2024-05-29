@@ -6,7 +6,7 @@
   import RangeSlider from 'svelte-range-slider-pips'
   import Map from './lib/Map.svelte'
 
-  let data, map, dateSlider, slider, dates, regions, indicators, latestDate, startDate;
+  let data, map, dateSlider, slider, dates, regions, indicators, latestDate, startDate, headerHeight;
   let filters = {region: '', indicator_name: ''};
 
   let sliderDates = [];
@@ -70,34 +70,32 @@
     }
     sliderDates = dates;
 
-    slider = sliderHorizontal()
-      .min(startDate)
-      .max(latestDate)
-      //.tickFormat(d3.utcFormat('%b %d, %Y'))
-      .tickFormat(d3.utcFormat('%b %Y'))
-      //.ticks(3)
-      .step(1)
-      .tickValues(dates)
-      .marks(dates)
-      .default([latestDate, startDate])
-      .width(200)
-      //.height(sliderHeight-50)
-      .handle(d3.symbol().type(d3.symbolCircle).size(200)())
-      .fill('#007CE0')
-      .on('end', (val) => {
-        onDateSelect(val)
-      });
+    // slider = sliderHorizontal()
+    //   .min(startDate)
+    //   .max(latestDate)
+    //   //.tickFormat(d3.utcFormat('%b %d, %Y'))
+    //   .tickFormat(d3.utcFormat('%b %Y'))
+    //   //.ticks(3)
+    //   .step(1)
+    //   .tickValues(dates)
+    //   .marks(dates)
+    //   .default([latestDate, startDate])
+    //   .width(200)
+    //   //.height(sliderHeight-50)
+    //   .handle(d3.symbol().type(d3.symbolCircle).size(200)())
+    //   .fill('#007CE0')
+    //   .on('end', (val) => {
+    //     onDateSelect(val)
+    //   });
 
-    const g = d3.select(dateSlider)
-      .append('svg')
-      .attr('width', 250)
-      .attr('height', 70)
-      .append('g')
-      .attr('transform', 'translate(25,25)');
+    // const g = d3.select(dateSlider)
+    //   .append('svg')
+    //   .attr('width', 250)
+    //   .attr('height', 70)
+    //   .append('g')
+    //   .attr('transform', 'translate(25,25)');
 
-    g.call(slider);
-
-    //console.log('---',slider.value([latestDate,startDate]))
+    // g.call(slider);
   }
 
   function onRegionSelect(e) {
@@ -177,8 +175,9 @@
 </script>
 
 <main>
-  <header class='header'>
-    <h1>HDX Signals</h1>
+  <header bind:clientHeight={headerHeight}>
+    <img src='HDXSignalsLogo_V2.png' alt='HDX Signals' />
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
     <h5>Filter by:</h5>
     <div class='filters'>
       {#if regions}
@@ -228,7 +227,7 @@
   </header>
   
   <div class='map'>
-    <Map bind:this={map} {signalsData} />
+    <Map bind:this={map} {signalsData} headerHeight={headerHeight} />
   </div>
 </main>
 
