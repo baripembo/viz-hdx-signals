@@ -254,13 +254,12 @@
     currentSignals.forEach(function(signal) {
     	let signalDate = dateFormat(new Date(signal.date));
 	    content += `<div class="signal">${signalDate}<br>`;
-	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}, <span class="alert-level ${signal.alert_level.split(' ')[0]}">${signal.alert_level}</span><br>`;
-	    if (signal.plot_url!=='NA') {
-	    	content += `<img class="plot" src="${signal.plot_url}" />${signal.further_information}`;
-	    }
-	    if (signal.map_url!=='NA') {
-	    	content += `<img class="map" src="${signal.map_url}" />`;
-	    }
+	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}<br>`;
+	    if (signal.summary_short!=='NA') content += `<p>${signal.summary_short}</p>`;
+	    if (signal.plot_url!=='NA') content += `<img class="plot" src="${signal.plot_url}" />`;
+	    if (signal.map_url!=='NA') content += `<img class="map" src="${signal.map_url}" />`;
+	    if (signal.campaign_url_archive!=='NA') content += `<p><a href="${signal.campaign_url_archive}" target="_blank">Go to the campaign</a></p>`;
+	    if (signal.further_information!=='NA') content += `${signal.further_information}`;
 	    content += '</div>';
     })
     content += '</div>';
