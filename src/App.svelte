@@ -39,7 +39,6 @@
       
       createFilters();
       createDateSlider();
-      console.log('sliderDates',sliderDates)
     }
   })
 

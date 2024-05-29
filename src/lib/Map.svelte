@@ -99,12 +99,6 @@
 
 	function loadFeatures() {
 	  //get alert count by country
-    // let countByCountry = data.reduce((a, {iso3}) => {
-    //   a[iso3] = a[iso3] || {iso3, count: 0};
-    //   a[iso3].count++;
-    //   return a;
-    // }, {});
-
     countByCountry = Object.values(data.reduce((a, {iso3, lat, lon}) => {
 		  a[iso3] = a[iso3] || {iso3, alert_count: 0, lat, lon};
 		  a[iso3].alert_count++;
@@ -113,25 +107,7 @@
 
 		let signals = [];
 		let hrpList = [];
-		//create features from data array
-		// data.forEach(function(signal, i) {
-		// 	if (signal.iso3 !== '') {
-		// 		//add alert count to properties
-		// 		signal.alert_count = countByCountry[signal.iso3].count;
 
-		// 		signals.push({
-		// 			'type': 'Feature',
-		// 			'geometry': {
-		// 				'type': 'Point',
-		// 				'coordinates': [signal.lon, signal.lat]
-		// 			},
-		// 			'properties': signal
-		// 		});
-
-		// 		//save list of hrps
-		// 		if (signal.hrp_country == 'TRUE') hrpList.push(signal.iso3);
-		// 	}
-		// });
 		countByCountry.forEach(function(signal, i) {
 			signals.push({
 				'type': 'Feature',
@@ -279,8 +255,12 @@
     	let signalDate = dateFormat(new Date(signal.date));
 	    content += `<div class="signal">${signalDate}<br>`;
 	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}, <span class="alert-level ${signal.alert_level.split(' ')[0]}">${signal.alert_level}</span><br>`;
-	    if (signal.plot_url!=='NA') content += `<img class="plot" src="${signal.plot_url}" />`;
-	    if (signal.plot_url!=='NA') content += `${signal.further_information}`;
+	    if (signal.plot_url!=='NA') {
+	    	content += `<img class="plot" src="${signal.plot_url}" />${signal.further_information}`;
+	    }
+	    if (signal.map_url!=='NA') {
+	    	content += `<img class="map" src="${signal.map_url}" />`;
+	    }
 	    content += '</div>';
     })
     content += '</div>';

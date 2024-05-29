@@ -187,7 +187,8 @@ select {
     height: auto;
     max-height: 420px;
     width: 530px;
-    .plot {
+    .plot,
+    .map {
       width: 500px;
     }
     h2 {
