@@ -27,7 +27,7 @@
 
 
   //marker scale
-  $: size = d3.scaleLinear()
+  $: size = d3.scaleSqrt()
     .domain([1, maxCount])
     .range([minMarkerSize, maxMarkerSize]);
 

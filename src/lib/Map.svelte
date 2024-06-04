@@ -29,12 +29,23 @@
     updateFeatures();
 	}
 
-	export const showPopup = (msg) => {
-    tooltipError.setHTML(msg);
-    tooltipError
-      .addTo(map)
-    	.setLngLat(map.getCenter());
-	}  
+	export const showPopup = (msg, isError) => {
+		const popup = d3.select('.popup');
+
+		//reset height
+		// const h = (isError) ? '75px' : '420px';
+		// popup.style('height', h);
+
+		popup.select('.popup-content').html(msg);
+		popup.style('display', 'block');
+		popup.style('opacity', 1);
+	}
+
+	export const closePopup = () => {
+		const popup = d3.select('.popup');
+		popup.style('display', 'none');
+		popup.style('opacity', 0);
+	}
 
 	export const capitalizeFirstLetter = (word) => {
     let firstLetter = word.replace('_', ' ').charAt(0).toUpperCase();
@@ -51,26 +62,25 @@
 	    style: `mapbox://styles/humdata/cl3lpk27k001k15msafr9714b`,
 	    center: center,
 	    zoom: zoom,
-	    minZoom: 1,
+	    minZoom: 1.5,
 	    maxZoom: 5.5
 	  });
 
 	  map.addControl(new mapboxgl.NavigationControl({showCompass: false}))
 	     .addControl(new mapboxgl.AttributionControl(), 'bottom-left');
 
-	  tooltip = new mapboxgl.Popup({
-			closeButton: true,
-			closeOnClick: true,
-			//closeOnMove: true,
-			className: 'map-tooltip'
-		});
+	  // tooltip = new mapboxgl.Popup({
+		// 	closeButton: true,
+		// 	closeOnClick: true,
+		// 	className: 'map-tooltip'
+		// });
 
-		tooltipError = new mapboxgl.Popup({
-			closeButton: true,
-			closeOnClick: true,
-			closeOnMove: true,
-			className: 'map-tooltip-error'
-		});
+		// tooltipError = new mapboxgl.Popup({
+		// 	closeButton: true,
+		// 	closeOnClick: true,
+		// 	closeOnMove: true,
+		// 	className: 'map-tooltip-error'
+		// });
 
 	  map.on('load', function() {
 	    console.log('Map loaded')
@@ -134,16 +144,15 @@
 
 		//create size scale for markers
 		maxCount = d3.max(countByCountry, d => d.alert_count);
-		let sizeScale = (maxCount<=1) ? minMarkerSize : [
-      'interpolate',
-      ['linear'],
-      ['get', 'alert_count'],
-      1, minMarkerSize,
-      maxCount,
-      maxMarkerSize
-    ];
+    let sizeScale = (maxCount <= 1) ? minMarkerSize : [
+		  'interpolate',
+		  ['linear'],
+		  ['sqrt', ['get', 'alert_count']],
+		  Math.sqrt(1), minMarkerSize,
+		  Math.sqrt(maxCount), maxMarkerSize
+		];
 
-    let signalColor = '#007CE0';//#F2645A
+    let signalColor = '#007CE0';
 
 		//add signal markers
 	  map.addLayer({
@@ -183,7 +192,6 @@
 	  map.on('click', 'signals-dots', (e) => {
 	  	mouseclick(e);
 	  });
-
 
 	  //zoom map to marker bounds
 	  zoomToBounds();
@@ -255,8 +263,8 @@
     content += '<div class="signal-container">';
     currentSignals.forEach(function(signal) {
     	let signalDate = dateFormat(new Date(signal.date));
-	    content += `<div class="signal">${signalDate}<br>`;
-	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}<br>`;
+	    content += `<div class="signal"><h3>${signalDate}: `;
+	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}</h3>`;
 	    if (signal.summary_short!=='NA') content += `<p>${signal.summary_short}</p>`;
 	    if (signal.plot_url!=='NA') content += `<img class="plot" src="${signal.plot_url}" />`;
 	    if (signal.map_url!=='NA') content += `<img class="map" src="${signal.map_url}" />`;
@@ -265,11 +273,20 @@
 	    content += '</div>';
     })
     content += '</div>';
-    tooltip.setHTML(content);
-    tooltip
-      .addTo(map)
-      .setLngLat(e.lngLat);
+
+    //set popup content
+    showPopup(content);
   }
+
+  onMount(() => {
+  	map.on('click', (e) => {
+  		//close the popup if clicked on anywhere outside of signal-dots layer
+      let featureSelected = map.queryRenderedFeatures(e.point, {layers: ['signals-dots']});
+  		if (featureSelected.length<=0) {
+  			closePopup();
+  		}
+    })
+  });
 
 	onDestroy(() => {
 	  map.remove();
@@ -281,6 +298,11 @@
 {#if maxCount}
 	<Legend {minMarkerSize} {maxMarkerSize} {maxCount} />
 {/if}
+
+<div class='popup'>
+	<i class='close-btn humanitarianicons-Exit-Cancel' on:click={closePopup} />
+	<div class='popup-content'></div>
+</div>
 
 
 <style lang='scss'>

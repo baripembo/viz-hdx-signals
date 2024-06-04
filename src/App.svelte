@@ -33,9 +33,7 @@
       data = results.data.filter(d => d.iso3 !== '' && new Date(d.date).getTime() >= startDate.getTime());
 
       signalsData = data;
-      console.log(signalsData);
-
-      //dates = signalsData.map(d => new Date(d.date));
+      //console.log(signalsData);
       
       createFilters();
       createDateSlider();
@@ -43,17 +41,16 @@
   })
 
   function createFilters() {
-    console.log(filters)
     if (filters.region=='') {
       //get list of regions
       let regionArray = signalsData.map(d => d.region);
-      regionArray.unshift('All Regions');
+      regionArray.unshift('All regions');
       regions = [... new Set(regionArray)].sort();
     }
     if (filters.indicator_name=='') {
       //get list of indicators
       let indicatorArray = signalsData.map(d => d.indicator_name);
-      indicatorArray.unshift('All Indicators');
+      indicatorArray.unshift('All datasets');
       indicators = [... new Set(indicatorArray)].sort();
     }
   }
@@ -99,12 +96,12 @@
   }
 
   function onRegionSelect(e) {
-    filters.region = (e.target.value=='All Regions') ? '' : e.target.value;
+    filters.region = (e.target.value=='All regions') ? '' : e.target.value;
     filterData();
   }
 
   function onIndicatorSelect(e) {
-    filters.indicator_name = (e.target.value=='All Indicators') ? '' : e.target.value.toLowerCase();
+    filters.indicator_name = (e.target.value=='All datasets') ? '' : e.target.value.toLowerCase();
     filterData();
   }
 
@@ -128,8 +125,8 @@
 
 
   function reset() {
-    d3.select('#regionSelect').node().value = 'All Regions';
-    d3.select('#indicatorSelect').node().value = 'All Indicators';
+    d3.select('#regionSelect').node().value = 'All regions';
+    d3.select('#indicatorSelect').node().value = 'All datasets';
     sliderDefault = [0, 3];
     filters = {region: '', indicator_name: '', date: [startDate, latestDate]};
     d3.select('#onlyHRP').node().checked = false;
@@ -137,6 +134,8 @@
   }
 
   function filterData() {
+    map.closePopup();
+
     let result = data.filter(d => {
       let validSignal = true;
       
@@ -166,18 +165,22 @@
       signalsData = result;
     }
     else {
-      map.showPopup(`There are no ${filters.indicator_name.replace('_', ' ')} signals in the ${filters.region} region for this selected time period`);
+      map.showPopup(`There are no ${filters.indicator_name.replace('_', ' ')} signals in the ${filters.region} region for this selected time period`, true);
     }
 
-    console.log(signalsData)
     //createFilters();
   }
 </script>
 
 <main>
   <header bind:clientHeight={headerHeight}>
-    <img src='HDXSignalsLogo_V2.png' alt='HDX Signals' />
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+    <div class='intro'>
+      <div class='logo'><a href='https://data.humdata.org/signals' target='_blank'><img src='HDXSignalsLogo_V2.png' alt='HDX Signals' /></a></div>
+      <div class='description'>
+        <p><a href='https://data.humdata.org/signals' target='_blank'>HDX Signals</a> monitors key datasets and generates automated emails when significant, negative changes are detected.</p>
+        <p>Explore recent and historical signals in the map below, and click on any country bubble to see signals content and links to the original email. Read more about HDX Signals on <a href='https://data.humdata.org/signals' target='_blank'>our website</a>.</p>
+      </div>
+    </div>
     <h5>Filter by:</h5>
     <div class='filters'>
       {#if regions}
@@ -217,10 +220,10 @@
       </div>
 
       <div class='input-wrapper'>
-        <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> <label for='onlyHRP'>Only countries with a Humanitarian Response Plan</label>
+        <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> <label for='onlyHRP'>Only priority humanitarian locations</label>
       </div>
 
-      <a href='#' class='btn-reset' on:click={reset}>Reset</a>
+      <button class='btn-reset' on:click={reset}>Reset</button>
     </div>
 
     <!-- <div class='filters-secondary'></div> -->
@@ -246,9 +249,23 @@
   }
   .btn-reset {
     margin-left: auto;
-    text-decoration: underline;
-    &:hover {
-      text-decoration: none;
+  }
+  .intro {
+    align-items: flex-start;
+    display: flex;
+    padding-top: 10px;
+  }
+  .logo {
+    flex: 0 0 25%;
+    img {
+      height: auto;
+      margin: 16px 0 0;
+      max-width: 100%; 
+      width: 70%;
     }
+  }
+  .description {
+    flex: 1;
+    padding-left: 20px;
   }
 </style>

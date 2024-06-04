@@ -45,13 +45,6 @@ body {
 
 header {
   margin: 0 50px 20px;
-  img {
-    margin: 30px 0 0;
-    width: 15%;
-  }
-  p {
-    width: 70%;
-  }
 }
 
 h1 {
@@ -165,12 +158,40 @@ select {
   width: 100%;
 }
 
+button {
+  background-color: #FFF;
+  border: 1px solid #007CE0;
+  border-radius: 8px;
+  cursor: pointer;
+  font: 700 16px 'Source Sans Pro', sans-serif;
+  height: 38px;
+  padding: 0 20px;
+  text-decoration: none;
+  &:hover {
+    background-color: #007CE0;
+    color: #FFF;
+  }
+}
+
 .content {
   > div {
     border-top: 1px solid #CCC;
     margin-left: 15px;
   }
 }
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 7px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, .5);
+  box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+}
+
+
 .map {
   height: 100%;
   position: relative;
@@ -191,8 +212,7 @@ select {
   .mapboxgl-popup-content {
     font-size: 14px;
     line-height: 18px;
-    height: auto;
-    max-height: 420px;
+    height: 420px;
     width: 530px;
     .plot,
     .map {
@@ -205,14 +225,13 @@ select {
       outline: none;
     }
     .signal-container {
-      //height: 90%;
-      max-height: 360px;
+      height: 360px;
       overflow-x: hidden;
-      //overflow-y: scroll;
+      overflow-y: scroll;
     }
     .signal {
-      border-bottom: 1px solid #EEE;
-      margin-bottom: 20px;
+      border-bottom: 1px solid #CCC;
+      margin-bottom: 30px;
       padding-bottom: 20px;
       &:last-child {
         border-bottom: 0;
@@ -235,6 +254,11 @@ select {
 
 .mapboxgl-popup-close-button {
   font-size: 25px;
+  padding: 0 12px;
+  &:hover {
+    background-color: #FFF !important;
+    color: #007CE0;
+  }
 }
 .alert-table {  
   align-items: center;
@@ -264,6 +288,70 @@ select {
   font-size: 12px;
 }
 
+.popup {
+  background-color: #FFF;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,.3);
+  display: none;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  left: 50%;
+  line-height: 18px;
+  padding: 15px;
+  position: absolute;
+  height: auto;
+  opacity: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 50em;
+  z-index: 3;
+  .plot,
+  .map {
+    display: block;
+    margin: auto;
+    width: 75%;
+  }
+  h2 {
+    margin-top: 0;
+  }
+  h3 {
+    margin-bottom: 0;
+  }
+  a {
+    outline: none;
+  }
+  .signal-container {
+    height: 360px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+  }
+  .signal {
+    border-bottom: 1px solid #CCC;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    &:last-child {
+      border-bottom: 0;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+  }
+  .stat {
+    text-transform: capitalize;
+  }
+  .close-btn {
+    color: rgba(0, 0, 0, .5);
+    cursor: pointer;
+    font-weight: 700;
+    display: block;
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    &:hover {
+      color: #007CE0;
+    }
+  }
+}
 
 #dateSlider {
   &.rangeSlider {
