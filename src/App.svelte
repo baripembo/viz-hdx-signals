@@ -2,43 +2,96 @@
   import * as d3 from 'd3';
   import Papa from 'papaparse'
   import { onMount } from 'svelte';
-  import KeyFigure from './lib/KeyFigure.svelte'
   import RangeSlider from 'svelte-range-slider-pips'
   import Map from './lib/Map.svelte'
 
-  let data, map, dateSlider, slider, dates, regions, indicators, latestDate, startDate, headerHeight;
+  let data, map, dateSlider, regions, indicators, latestDate, startDate, headerHeight;
   let filters = {region: '', indicator_name: ''};
-
   let sliderDates = [];
   let sliderDefault = [0,3];
+  let coordsData = [];
   
   $: signalsData = [];
   $: hasHRP = true;
 
-  Papa.parse('signals.csv', {
-    header: true,
-    download: true,
-    complete: function(results) {
-      //get latest date in data
-      results.data.sort(function(a,b) {
-        return new Date(b.date) - new Date(a.date);
+  const numMonths = 3;
+
+  const coordsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/DSCI-21-HDX-signals-alerts-pipeline/metadata/location_metadata.csv';
+  const signalsURL = 'hdx-signals.csv';//'https://stage.data-humdata-org.ahconu.org/dataset/30a97df6-ac93-4ff9-b08b-9c24038fd667/resource/ce6bfedf-8326-40f6-95e4-8213466b27a4/download/hdx-signals.csv';
+
+
+
+  Promise.all([loadCSV(coordsURL), loadCSV(signalsURL)])
+    .then(([coords, signals]) => {
+      console.log('coords:', coords);
+      console.log('signals:', signals);
+
+      dataLoaded(coords, signals);
+    })
+    .catch(error => {
+      console.error('Error loading files:', error);
+    });
+
+
+  function loadCSV(filePath) {
+    return new Promise((resolve, reject) => {
+      Papa.parse(filePath, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          resolve(results.data);
+        },
+        error: function(error) {
+          reject(error);
+        }
       });
-      latestDate = new Date(results.data[0].date);
+    });
+  }
 
-      //set start date 3 months prior to latest date
-      startDate = new Date(latestDate);
-      startDate.setMonth(startDate.getMonth() - 3);
-      
-      //get results within 3 months
-      data = results.data.filter(d => d.iso3 !== '' && new Date(d.date).getTime() >= startDate.getTime());
+  function dataLoaded(coords, signals) {
+    coordsData = coords;
 
-      signalsData = data;
-      //console.log(signalsData);
-      
-      createFilters();
-      createDateSlider();
+    //get latest date in data
+    signals.sort(function(a,b) {
+      return new Date(b.date) - new Date(a.date);
+    });
+    latestDate = new Date(signals[0].date);
+
+    //add coords to matched signals
+    signals.forEach((signal) => {
+      let coords = findLatLong(signal.iso3);
+      signal.lat = (coords!==null) ? coords.lat : null;
+      signal.lon = (coords!==null) ? coords.lon : null;
+    });
+
+    //set start date 3 months prior to latest date
+    startDate = new Date(latestDate);
+    startDate.setMonth(startDate.getMonth() - numMonths);
+    
+    //get results within 3 months
+    data = signals.filter(d => d.iso3 !== '' && new Date(d.date).getTime() >= startDate.getTime());
+
+    signalsData = data;
+    console.log('signalsData', signalsData);
+    
+    createFilters();
+    createDateSlider();
+  }
+
+  function findLatLong(iso3) {
+    const match = coordsData.find(row => {
+      return row['Alpha-3 code'] === iso3
+    });
+    if (match) {
+      return {
+        lat: +match.Latitude,
+        lon: +match.Longitude
+      };
+    } 
+    else {
+      return null;
     }
-  })
+  }
 
   function createFilters() {
     if (filters.region=='') {
@@ -56,43 +109,14 @@
   }
 
   function createDateSlider() {
-    //const sliderHeight = 580;
-    //dates = dates.sort((a, b) => a.getTime() - b.getTime());
-    const listLength = 4; // months
+    const listLength = numMonths + 1; // months
     const dates = [];
     for(let i = 0; i < listLength; i++) {
-        const itemDate = new Date(startDate); // starting today
-        itemDate.setMonth(itemDate.getMonth() + i);
-        dates.push(itemDate);
+      const itemDate = new Date(startDate);
+      itemDate.setMonth(itemDate.getMonth() + i);
+      dates.push(itemDate);
     }
     sliderDates = dates;
-
-    // slider = sliderHorizontal()
-    //   .min(startDate)
-    //   .max(latestDate)
-    //   //.tickFormat(d3.utcFormat('%b %d, %Y'))
-    //   .tickFormat(d3.utcFormat('%b %Y'))
-    //   //.ticks(3)
-    //   .step(1)
-    //   .tickValues(dates)
-    //   .marks(dates)
-    //   .default([latestDate, startDate])
-    //   .width(200)
-    //   //.height(sliderHeight-50)
-    //   .handle(d3.symbol().type(d3.symbolCircle).size(200)())
-    //   .fill('#007CE0')
-    //   .on('end', (val) => {
-    //     onDateSelect(val)
-    //   });
-
-    // const g = d3.select(dateSlider)
-    //   .append('svg')
-    //   .attr('width', 250)
-    //   .attr('height', 70)
-    //   .append('g')
-    //   .attr('transform', 'translate(25,25)');
-
-    // g.call(slider);
   }
 
   function onRegionSelect(e) {
@@ -167,9 +191,12 @@
     else {
       map.showPopup(`There are no ${filters.indicator_name.replace('_', ' ')} signals in the ${filters.region} region for this selected time period`, true);
     }
-
-    //createFilters();
   }
+
+  onMount(() => {
+    if (map.isMobile()) d3.select('header').node().style.height = (window.innerHeight/2 - 20) + 'px';
+  });
+
 </script>
 
 <main>
@@ -237,35 +264,5 @@
 <style lang='scss'>
   main {
     position: relative;
-  }
-  .filters,
-  .filters-secondary {
-    align-items: center;
-    display: flex;
-  }
-  .slider-container {
-    margin: 0 40px;
-    width: 250px;
-  }
-  .btn-reset {
-    margin-left: auto;
-  }
-  .intro {
-    align-items: flex-start;
-    display: flex;
-    padding-top: 10px;
-  }
-  .logo {
-    flex: 0 0 25%;
-    img {
-      height: auto;
-      margin: 16px 0 0;
-      max-width: 100%; 
-      width: 70%;
-    }
-  }
-  .description {
-    flex: 1;
-    padding-left: 20px;
   }
 </style>

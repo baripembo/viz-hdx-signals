@@ -64,27 +64,4 @@
 
 
 <style lang='scss'>
-  .legend-container {
-    background-color: rgba(255,255,255,0.8);
-    bottom: 20px;
-    font-size: 14px;
-    height: 100px;
-    position: absolute;
-    padding: 15px;
-    right: 20px;
-    width: 175px;
-    z-index: 2;
-    circle {
-      fill: none;
-      stroke: #007CE0;
-    }
-    line {
-      stroke: #007CE0;
-      stroke-dasharray: 2,2;
-    }
-    text {
-      alignment-baseline: middle;
-      font-size: 12px;
-    }
-  }
 </style>

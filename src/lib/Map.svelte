@@ -31,11 +31,6 @@
 
 	export const showPopup = (msg, isError) => {
 		const popup = d3.select('.popup');
-
-		//reset height
-		// const h = (isError) ? '75px' : '420px';
-		// popup.style('height', h);
-
 		popup.select('.popup-content').html(msg);
 		popup.style('display', 'block');
 		popup.style('opacity', 1);
@@ -53,8 +48,15 @@
     return firstLetter + remainingLetters;
 	}
 
+	export const isMobile = () => {
+    const userAgentCheck = /Mobi|Android/i.test(navigator.userAgent);
+    const screenSizeCheck = window.matchMedia("(max-width: 767px)").matches;
+    return userAgentCheck || screenSizeCheck;
+	}
+
 	onMount(() => {
-		mapContainer.style.height = window.innerHeight - (headerHeight + 20) + 'px';
+		//mapContainer.style.height = window.innerHeight - (headerHeight + 20) + 'px';
+		mapContainer.style.height = (isMobile()) ? (window.innerHeight/2) + 'px' : window.innerHeight - (headerHeight + 20) + 'px';
 
 		//init map
 	  map = new mapboxgl.Map({
@@ -69,22 +71,10 @@
 	  map.addControl(new mapboxgl.NavigationControl({showCompass: false}))
 	     .addControl(new mapboxgl.AttributionControl(), 'bottom-left');
 
-	  // tooltip = new mapboxgl.Popup({
-		// 	closeButton: true,
-		// 	closeOnClick: true,
-		// 	className: 'map-tooltip'
-		// });
-
-		// tooltipError = new mapboxgl.Popup({
-		// 	closeButton: true,
-		// 	closeOnClick: true,
-		// 	closeOnMove: true,
-		// 	className: 'map-tooltip-error'
-		// });
 
 	  map.on('load', function() {
 	    console.log('Map loaded')
-		  //console.log('in map', data)
+		  console.log('in map', data)
 
 		  //initPolys();
 		  loadFeatures();
@@ -265,17 +255,21 @@
     	let signalDate = dateFormat(new Date(signal.date));
 	    content += `<div class="signal"><h3>${signalDate}: `;
 	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}</h3>`;
-	    if (signal.summary_short!=='NA') content += `<p>${signal.summary_short}</p>`;
-	    if (signal.plot_url!=='NA') content += `<img class="plot" src="${signal.plot_url}" />`;
-	    if (signal.map_url!=='NA') content += `<img class="map" src="${signal.map_url}" />`;
-	    if (signal.campaign_url_archive!=='NA') content += `<p><a href="${signal.campaign_url_archive}" target="_blank">Go to the campaign</a></p>`;
-	    if (signal.further_information!=='NA') content += `${signal.further_information}`;
+	    if (isValid(signal.summary_short)) content += `<p>${signal.summary_short}</p>`;
+	    if (isValid(signal.plot_url)) content += `<img class="plot" src="${signal.plot_url}" />`;
+	    if (isValid(signal.map_url)) content += `<img class="map" src="${signal.map_url}" />`;
+	    if (isValid(signal.campaign_url)) content += `<p><a href="${signal.campaign_url}" target="_blank">Go to the campaign</a></p>`;
+	    if (isValid(signal.further_information)) content += `${signal.further_information}`;
 	    content += '</div>';
     })
     content += '</div>';
 
     //set popup content
     showPopup(content);
+  }
+
+  function isValid(url) {
+  	return (url!=='NA' && url!=='nan' && url!==undefined);
   }
 
   onMount(() => {
