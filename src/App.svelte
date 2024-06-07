@@ -17,7 +17,7 @@
   const numMonths = 3;
 
   const coordsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/DSCI-21-HDX-signals-alerts-pipeline/metadata/location_metadata.csv';
-  const signalsURL = 'hdx-signals.csv';//'https://stage.data-humdata-org.ahconu.org/dataset/30a97df6-ac93-4ff9-b08b-9c24038fd667/resource/ce6bfedf-8326-40f6-95e4-8213466b27a4/download/hdx-signals.csv';
+  const signalsURL = 'signals.csv';//'https://stage.data-humdata-org.ahconu.org/dataset/30a97df6-ac93-4ff9-b08b-9c24038fd667/resource/ce6bfedf-8326-40f6-95e4-8213466b27a4/download/hdx-signals.csv';
 
 
 
@@ -142,11 +142,31 @@
     filterData();
   }
 
+  function onCheck(e) {
+    let target = e.target;
+    let checks = d3.selectAll(`input[name="${target.name}"]`).nodes();
+    if (target.id==='region0' || target.id==='indicator0') {
+      checks.forEach(check => check.checked = target.checked);
+    }
+    else {
+      // checks[0].checked = target.checked;
+      // let allChecked = false;
+      // checks.forEach(function(check) {
+      //   check.checked = target.checked;
+      // });
+
+      const checks = d3.selectAll(`input[name="${target.name}"]`).nodes();
+      console.log(checks)
+      checks.shift();
+      console.log('--', Array.from(checks).every(checks => checks.checked))
+      checks[0].checked = Array.from(checks).every(check => check.checked);
+    }
+  }
+
   //formatter for date slider
   function formatter(value) {
     return d3.utcFormat('%b %Y')(sliderDates[value]);
   }
-
 
   function reset() {
     d3.select('#regionSelect').node().value = 'All regions';
@@ -201,14 +221,14 @@
 
 <main>
   <header bind:clientHeight={headerHeight}>
-    <div class='intro'>
-      <div class='logo'><a href='https://data.humdata.org/signals' target='_blank'><img src='HDXSignalsLogo_V2.png' alt='HDX Signals' /></a></div>
-      <div class='description'>
+    <div class='grid-container intro'>
+      <div class='col-3 logo'><a href='https://data.humdata.org/signals' target='_blank'><img src='HDXSignalsLogo_white.png' alt='HDX Signals' /></a></div>
+      <div class='col-7 description'>
         <p><a href='https://data.humdata.org/signals' target='_blank'>HDX Signals</a> monitors key datasets and generates automated emails when significant, negative changes are detected.</p>
         <p>Explore recent and historical signals in the map below, and click on any country bubble to see signals content and links to the original email. Read more about HDX Signals on <a href='https://data.humdata.org/signals' target='_blank'>our website</a>.</p>
       </div>
     </div>
-    <h5>Filter by:</h5>
+    <!-- <h5>Filter by:</h5>
     <div class='filters'>
       {#if regions}
         <div class='select-wrapper'>
@@ -251,18 +271,88 @@
       </div>
 
       <button class='btn-reset' on:click={reset}>Reset</button>
-    </div>
+    </div> -->
 
     <!-- <div class='filters-secondary'></div> -->
   </header>
-  
-  <div class='map'>
-    <Map bind:this={map} {signalsData} headerHeight={headerHeight} />
+
+  <div class='grid-container'>
+    <div class='col-3 filter-list'>
+      <h5>Filter by:</h5>
+      {#if regions}
+        <ul>
+          {#each regions as region, i}
+            <li><label><input type='checkbox' id={'region'+i} name='selectRegion' on:change={onCheck} checked> {region}</label></li>
+          {/each}
+        </ul>
+      {/if}
+      {#if indicators}
+        <ul>
+          {#each indicators as indicator, i}
+            <li><label><input type='checkbox' id={'indicator'+i} name='selectIndicator' on:change={onCheck} checked> {map.capitalizeFirstLetter(indicator.replace('_', ' '))}</label></li>
+          {/each}
+        </ul>
+      {/if}
+
+      <div class='input-wrapper'>
+        <label><input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> Only priority humanitarian locations</label>
+      </div>
+
+      <div class='slider-container'>
+        {#if sliderDates.length>0}
+          <RangeSlider
+            all='label'
+            id='dateSlider'
+            pips 
+            max={3}
+            range
+            step={1}
+            bind:values={sliderDefault}
+            {formatter} 
+            on:change={onDateSelect} 
+          />
+        {/if}
+      </div>
+
+      <button class='btn-apply'>Apply</button>
+      <button class='btn-reset' on:click={reset}>Reset</button>
+    </div>
+    
+    <div class='col-9 map'>
+      <Map bind:this={map} {signalsData} headerHeight={headerHeight} />
+    </div>
   </div>
+
 </main>
 
 <style lang='scss'>
   main {
     position: relative;
+  }
+  .logo img {
+    width: 100%;
+  }
+  .filter-list {
+    background-color: #FFF;
+    padding: 10px 0 0 30px;
+    ul {
+      padding-left: 0;      
+      li {
+        list-style-type: none;
+        padding-left: 16px;
+        &:first-child {
+          padding-left: 0;
+        }
+      }
+    }
+    label {      
+      display: block;
+      margin-bottom: 5px;
+      margin-left: 18px;
+      width: 90%;
+      input[type='checkbox'] {
+        margin-left: -18px;
+      }
+    }
   }
 </style>

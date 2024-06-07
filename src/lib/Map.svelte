@@ -21,7 +21,7 @@
 	let minMarkerSize = 8;
 	let maxMarkerSize = 20;
 
-	$: if (mapContainer) mapContainer.style.height = window.innerHeight - (headerHeight + 20) + 'px';
+	$: if (mapContainer) mapContainer.style.height = window.innerHeight - (headerHeight + 0) + 'px';
 
 	let data = signalsData;
 	$: if (data != signalsData) {  
@@ -56,7 +56,7 @@
 
 	onMount(() => {
 		//mapContainer.style.height = window.innerHeight - (headerHeight + 20) + 'px';
-		mapContainer.style.height = (isMobile()) ? (window.innerHeight/2) + 'px' : window.innerHeight - (headerHeight + 20) + 'px';
+		mapContainer.style.height = (isMobile()) ? (window.innerHeight/2) + 'px' : window.innerHeight - (headerHeight + 0) + 'px';
 
 		//init map
 	  map = new mapboxgl.Map({
