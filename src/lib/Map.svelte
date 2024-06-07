@@ -21,7 +21,9 @@
 	let minMarkerSize = 8;
 	let maxMarkerSize = 20;
 
-	$: if (mapContainer) mapContainer.style.height = window.innerHeight - (headerHeight + 0) + 'px';
+	$: if (mapContainer) {
+		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
+	}
 
 	let data = signalsData;
 	$: if (data != signalsData) {  
@@ -55,8 +57,7 @@
 	}
 
 	onMount(() => {
-		//mapContainer.style.height = window.innerHeight - (headerHeight + 20) + 'px';
-		mapContainer.style.height = (isMobile()) ? (window.innerHeight/2) + 'px' : window.innerHeight - (headerHeight + 0) + 'px';
+		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
 
 		//init map
 	  map = new mapboxgl.Map({
@@ -197,12 +198,13 @@
 
 	function zoomToBounds() {
 		//zoom map to bounds
+		let mapPadding = (isMobile()) ? {top: 20, right: 20, bottom: 20, left: 20} : {top: 100, right: 80, bottom: 175, left: 80};
 		if (signalsGeoData !== undefined) {
 		  let bounds = new mapboxgl.LngLatBounds();
 			signalsGeoData.features.forEach(function(feature) {
 			  bounds.extend(feature.geometry.coordinates);
 			});
-			map.fitBounds(bounds, {padding: {top: 100, right: 80, bottom: 175, left: 80}, duration: 500});
+			map.fitBounds(bounds, {padding: mapPadding, duration: 500});
 		}
 	}
 
@@ -269,7 +271,7 @@
   }
 
   function isValid(url) {
-  	return (url!=='NA' && url!=='nan' && url!==undefined);
+  	return (url!=='NA' && url!=='nan' && url!==undefined && url!=='');
   }
 
   onMount(() => {

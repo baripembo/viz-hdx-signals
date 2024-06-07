@@ -6,18 +6,19 @@
   import Map from './lib/Map.svelte'
 
   let data, map, dateSlider, regions, indicators, latestDate, startDate, headerHeight;
-  let filters = {region: '', indicator_name: ''};
+  let filters = {region: [], indicator_name: []};
   let sliderDates = [];
   let sliderDefault = [0,3];
   let coordsData = [];
   
   $: signalsData = [];
+  $: errorMsg = '';
   $: hasHRP = true;
 
   const numMonths = 3;
 
   const coordsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/DSCI-21-HDX-signals-alerts-pipeline/metadata/location_metadata.csv';
-  const signalsURL = 'signals.csv';//'https://stage.data-humdata-org.ahconu.org/dataset/30a97df6-ac93-4ff9-b08b-9c24038fd667/resource/ce6bfedf-8326-40f6-95e4-8213466b27a4/download/hdx-signals.csv';
+  const signalsURL = 'signals.csv';//https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/main/metadata/signals.csv';
 
 
 
@@ -139,27 +140,19 @@
     let startTime = new Date(sliderDates[selected[0]]).getTime();
     let endTime = new Date(sliderDates[selected[1]]).getTime();
     filters.date = [startTime, endTime];
-    filterData();
+    //filterData();
   }
 
   function onCheck(e) {
     let target = e.target;
-    let checks = d3.selectAll(`input[name="${target.name}"]`).nodes();
-    if (target.id==='region0' || target.id==='indicator0') {
+    if (target.id==='All regions' || target.id==='All datasets') {
+      let group = target.name.split('-')[0];
+      let checks = d3.selectAll(`input[name="${group}"]`).nodes();
       checks.forEach(check => check.checked = target.checked);
     }
     else {
-      // checks[0].checked = target.checked;
-      // let allChecked = false;
-      // checks.forEach(function(check) {
-      //   check.checked = target.checked;
-      // });
-
       const checks = d3.selectAll(`input[name="${target.name}"]`).nodes();
-      console.log(checks)
-      checks.shift();
-      console.log('--', Array.from(checks).every(checks => checks.checked))
-      checks[0].checked = Array.from(checks).every(check => check.checked);
+      d3.select(`input[name="${target.name}-all"]`).node().checked = Array.from(checks).every(check => check.checked);
     }
   }
 
@@ -168,9 +161,44 @@
     return d3.utcFormat('%b %Y')(sliderDates[value]);
   }
 
+  function apply() {
+    filters.region = [];
+    filters.indicator_name = [];
+
+    //get regions
+    const regionChecks = d3.selectAll(`input[name="selectRegion"]`).nodes();
+    regionChecks.forEach(check => {
+      if (check.checked) filters.region.push(check.id);
+    })
+
+    //get indicators
+    const indicatorChecks = d3.selectAll(`input[name="selectIndicator"]`).nodes();
+    indicatorChecks.forEach(check => {
+      if (check.checked) filters.indicator_name.push(check.id);
+    })
+
+    //get saved date values from onDateSelect
+
+    //get hrp
+    filters.hrp_country = (d3.select('#onlyHRP').node().checked) ? 'TRUE' : '';
+
+    //apply filters
+    if (filters.region.length<1 || filters.indicator_name.length<1) {
+      if (filters.region.length<1) {
+        errorMsg = 'Please select at least one region';
+      }
+      if (filters.indicator_name.length<1) {
+        errorMsg = 'Please select at least one dataset';
+      }
+    }
+    else {
+      filterData();
+    }
+  }
+
   function reset() {
-    d3.select('#regionSelect').node().value = 'All regions';
-    d3.select('#indicatorSelect').node().value = 'All datasets';
+    const checks = d3.selectAll('input[type="checkbox"]').nodes();
+    checks.forEach(check => check.checked = true);
     sliderDefault = [0, 3];
     filters = {region: '', indicator_name: '', date: [startDate, latestDate]};
     d3.select('#onlyHRP').node().checked = false;
@@ -178,6 +206,7 @@
   }
 
   function filterData() {
+    errorMsg = '';
     map.closePopup();
 
     let result = data.filter(d => {
@@ -185,9 +214,14 @@
       
       for (const [key, value] of Object.entries(filters)) {
         if (Array.isArray(value)) {
-          let signalTime = new Date(d[key]).getTime();
-          if (signalTime < value[0] || signalTime > value[1])
-            validSignal = false;
+          if (key==='region' || key==='indicator_name') {
+            if (!value.includes(d[key])) validSignal = false;
+          }
+          if (key==='date') {
+            let signalTime = new Date(d[key]).getTime();
+            if (signalTime < value[0] || signalTime > value[1])
+              validSignal = false;
+            }
         }
         else {
           if (value!=='' && value!==d[key])
@@ -209,71 +243,25 @@
       signalsData = result;
     }
     else {
-      map.showPopup(`There are no ${filters.indicator_name.replace('_', ' ')} signals in the ${filters.region} region for this selected time period`, true);
+      errorMsg = 'There are no signals to display, please widen your selection';
     }
   }
 
   onMount(() => {
-    if (map.isMobile()) d3.select('header').node().style.height = (window.innerHeight/2 - 20) + 'px';
+    d3.select('.filter-list').node().style.height = (map.isMobile()) ? ((window.innerHeight - headerHeight)*0.4) + 'px' : window.innerHeight - (d3.select('header').node().getBoundingClientRect().height) + 'px';
   });
 
 </script>
 
 <main>
   <header bind:clientHeight={headerHeight}>
-    <div class='grid-container intro'>
+    <div class='grid-container'>
       <div class='col-3 logo'><a href='https://data.humdata.org/signals' target='_blank'><img src='HDXSignalsLogo_white.png' alt='HDX Signals' /></a></div>
       <div class='col-7 description'>
         <p><a href='https://data.humdata.org/signals' target='_blank'>HDX Signals</a> monitors key datasets and generates automated emails when significant, negative changes are detected.</p>
         <p>Explore recent and historical signals in the map below, and click on any country bubble to see signals content and links to the original email. Read more about HDX Signals on <a href='https://data.humdata.org/signals' target='_blank'>our website</a>.</p>
       </div>
     </div>
-    <!-- <h5>Filter by:</h5>
-    <div class='filters'>
-      {#if regions}
-        <div class='select-wrapper'>
-          <select on:change={onRegionSelect} id='regionSelect'>
-            {#each regions as region}
-              <option value={region}>{region}</option>
-            {/each}
-          </select>
-        </div>
-      {/if}
-
-      {#if indicators}
-        <div class='select-wrapper'>
-          <select on:change={onIndicatorSelect} id='indicatorSelect'>
-            {#each indicators as indicator}
-              <option value={indicator}>{map.capitalizeFirstLetter(indicator.replace('_', ' '))}</option>
-            {/each}
-          </select>
-        </div>
-      {/if}
-
-      <div class='slider-container'>
-        {#if sliderDates.length>0}
-          <RangeSlider
-            all='label'
-            id='dateSlider'
-            pips 
-            max={3}
-            range
-            step={1}
-            bind:values={sliderDefault}
-            {formatter} 
-            on:change={onDateSelect} 
-          />
-        {/if}
-      </div>
-
-      <div class='input-wrapper'>
-        <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> <label for='onlyHRP'>Only priority humanitarian locations</label>
-      </div>
-
-      <button class='btn-reset' on:click={reset}>Reset</button>
-    </div> -->
-
-    <!-- <div class='filters-secondary'></div> -->
   </header>
 
   <div class='grid-container'>
@@ -282,20 +270,20 @@
       {#if regions}
         <ul>
           {#each regions as region, i}
-            <li><label><input type='checkbox' id={'region'+i} name='selectRegion' on:change={onCheck} checked> {region}</label></li>
+            <li><label><input type='checkbox' id={region} name={i===0 ? 'selectRegion-all' : 'selectRegion'} on:change={onCheck} checked> {region}</label></li>
           {/each}
         </ul>
       {/if}
       {#if indicators}
         <ul>
           {#each indicators as indicator, i}
-            <li><label><input type='checkbox' id={'indicator'+i} name='selectIndicator' on:change={onCheck} checked> {map.capitalizeFirstLetter(indicator.replace('_', ' '))}</label></li>
+            <li><label><input type='checkbox' id={indicator} name={i===0 ? 'selectIndicator-all' : 'selectIndicator'} on:change={onCheck} checked> {map.capitalizeFirstLetter(indicator.replace('_', ' '))}</label></li>
           {/each}
         </ul>
       {/if}
 
       <div class='input-wrapper'>
-        <label><input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> Only priority humanitarian locations</label>
+        <label><input type='checkbox' id='onlyHRP' disabled={!hasHRP}> Only priority humanitarian locations</label><!--on:change={onHRPSelect} -->
       </div>
 
       <div class='slider-container'>
@@ -308,14 +296,18 @@
             range
             step={1}
             bind:values={sliderDefault}
-            {formatter} 
             on:change={onDateSelect} 
+            {formatter} 
           />
         {/if}
       </div>
 
-      <button class='btn-apply'>Apply</button>
-      <button class='btn-reset' on:click={reset}>Reset</button>
+      <span class='error-msg'>{errorMsg}</span>
+      
+      <div class='buttons'>
+        <button class='btn-reset' on:click={reset}>Reset</button>
+        <button class='btn-apply' on:click={apply}>Apply</button>
+      </div>
     </div>
     
     <div class='col-9 map'>
@@ -328,31 +320,5 @@
 <style lang='scss'>
   main {
     position: relative;
-  }
-  .logo img {
-    width: 100%;
-  }
-  .filter-list {
-    background-color: #FFF;
-    padding: 10px 0 0 30px;
-    ul {
-      padding-left: 0;      
-      li {
-        list-style-type: none;
-        padding-left: 16px;
-        &:first-child {
-          padding-left: 0;
-        }
-      }
-    }
-    label {      
-      display: block;
-      margin-bottom: 5px;
-      margin-left: 18px;
-      width: 90%;
-      input[type='checkbox'] {
-        margin-left: -18px;
-      }
-    }
   }
 </style>
