@@ -18,15 +18,12 @@
   const numMonths = 3;
 
   const coordsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/DSCI-21-HDX-signals-alerts-pipeline/metadata/location_metadata.csv';
-  const signalsURL = 'signals.csv';//https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/main/metadata/signals.csv';
+  const signalsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/main/metadata/signals.csv';
 
 
 
   Promise.all([loadCSV(coordsURL), loadCSV(signalsURL)])
     .then(([coords, signals]) => {
-      console.log('coords:', coords);
-      console.log('signals:', signals);
-
       dataLoaded(coords, signals);
     })
     .catch(error => {
