@@ -20,9 +20,11 @@
 	let dateFormat = d3.utcFormat('%b %d, %Y');
 	let minMarkerSize = 8;
 	let maxMarkerSize = 20;
+	let minZoom = 1.5;
 
 	$: if (mapContainer) {
 		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
+		minZoom = (isMobile()) ? 1 : 1.5;
 	}
 
 	let data = signalsData;
@@ -58,6 +60,7 @@
 
 	onMount(() => {
 		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
+		minZoom = isMobile() ? 1 : 1.5;
 
 		//init map
 	  map = new mapboxgl.Map({
@@ -65,7 +68,7 @@
 	    style: `mapbox://styles/humdata/cl3lpk27k001k15msafr9714b`,
 	    center: center,
 	    zoom: zoom,
-	    minZoom: 1.5,
+	    minZoom: minZoom,
 	    maxZoom: 5.5
 	  });
 

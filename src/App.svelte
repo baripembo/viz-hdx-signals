@@ -305,6 +305,11 @@
         <button class='btn-reset' on:click={reset}>Reset</button>
         <button class='btn-apply' on:click={apply}>Apply</button>
       </div>
+
+      <div class='logos'>
+        <a href='https://www.unocha.org' target='_blank'><img src='logo-ocha-blue.png' alt='OCHA' width='100'></a>
+        <a href='https://centre.humdata.org' target='_blank'><img src='logo-centre-green.png' width='160' alt='Centre for Humanitarian Data'></a>
+      </div>
     </div>
     
     <div class='col-9 map'>
@@ -317,5 +322,13 @@
 <style lang='scss'>
   main {
     position: relative;
+  }
+  .logos {
+    align-items: center;
+    display: flex;
+    margin-top: 30px;
+    img {
+      margin-right: 20px;
+    }
   }
 </style>
