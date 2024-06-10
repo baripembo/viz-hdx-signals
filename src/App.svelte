@@ -128,7 +128,7 @@
   }
 
   function onHRPSelect(e) {
-    filters.hrp_country = (e.target.checked) ? 'TRUE' : '';
+    filters.hrp_location = (e.target.checked) ? 'TRUE' : '';
     filterData();
   }
 
@@ -177,7 +177,7 @@
     //get saved date values from onDateSelect
 
     //get hrp
-    filters.hrp_country = (d3.select('#onlyHRP').node().checked) ? 'TRUE' : '';
+    filters.hrp_location = (d3.select('#onlyHRP').node().checked) ? 'True' : '';
 
     //apply filters
     if (filters.region.length<1 || filters.indicator_name.length<1) {
@@ -221,7 +221,7 @@
             }
         }
         else {
-          if (value!=='' && value!==d[key])
+          if (value!=='' && value.toLowerCase()!==d[key].toLowerCase())
             validSignal = false;
         }
         // else if (typeof value === 'function') {
@@ -234,7 +234,7 @@
     });
 
     //set only HRP checkbox status
-    hasHRP = result.some(d => d['hrp_country'] === 'TRUE');
+    hasHRP = result.some(d => d['hrp_location'] === 'TRUE');
 
     if (result.length>0) {
       signalsData = result;
@@ -271,6 +271,11 @@
           {/each}
         </ul>
       {/if}
+
+      <div class='input-wrapper'>
+        <label><input type='checkbox' id='onlyHRP' disabled={!hasHRP}> Only priority humanitarian locations</label>
+      </div>
+
       {#if indicators}
         <ul>
           {#each indicators as indicator, i}
@@ -278,10 +283,6 @@
           {/each}
         </ul>
       {/if}
-
-      <div class='input-wrapper'>
-        <label><input type='checkbox' id='onlyHRP' disabled={!hasHRP}> Only priority humanitarian locations</label><!--on:change={onHRPSelect} -->
-      </div>
 
       <div class='slider-container'>
         {#if sliderDates.length>0}
