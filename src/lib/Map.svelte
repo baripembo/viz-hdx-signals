@@ -250,7 +250,7 @@
 		currentSignals = getAlerts(iso3);
 
     let numSignals = getNumAlerts(currentSignals[0].iso3)[0].alert_count;
-    let content = `<h2>${currentSignals[0].country} <span>(${numSignals} ${numSignals>1 ? 'signals' : 'signal'})</span></h2>`;
+    let content = `<h2>${currentSignals[0].location} <span>(${numSignals} ${numSignals>1 ? 'signals' : 'signal'})</span></h2>`;
 
     content += '<div class="signal-container">';
     currentSignals.forEach(function(signal) {
@@ -258,8 +258,8 @@
 	    content += `<div class="signal"><h3>${signalDate}: `;
 	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}</h3>`;
 	    if (isValid(signal.summary_short)) content += `<p>${signal.summary_short}</p>`;
-	    if (isValid(signal.plot_url)) content += `<img class="plot" src="${signal.plot_url}" />`;
-	    if (isValid(signal.map_url)) content += `<img class="map" src="${signal.map_url}" />`;
+	    if (isValid(signal.plot)) content += `<img class="plot" src="${signal.plot}" />`;
+	    if (isValid(signal.map)) content += `<img class="map" src="${signal.map}" />`;
 	    if (isValid(signal.campaign_url)) content += `<p><a href="${signal.campaign_url}" target="_blank">Go to the campaign</a></p>`;
 	    if (isValid(signal.further_information)) content += `${signal.further_information}`;
 	    content += '</div>';
