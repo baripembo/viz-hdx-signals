@@ -15,16 +15,15 @@
 
 	$: maxCount = 0;
 
-	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, fHover, tooltip, tooltipError;
+	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, hoveredStateId, tooltip, tooltipError;
 	let numFormat = d3.format(',');
 	let dateFormat = d3.utcFormat('%b %d, %Y');
 	let minMarkerSize = 8;
 	let maxMarkerSize = 20;
-	let minZoom = 1.5;
+	let minZoom = 1;
 
 	$: if (mapContainer) {
 		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
-		minZoom = (isMobile()) ? 1 : 1.5;
 	}
 
 	let data = signalsData;
@@ -32,6 +31,7 @@
 		data = signalsData;
     updateFeatures();
 	}
+
 
 	export const showPopup = (msg, isError) => {
 		const popup = d3.select('.popup');
@@ -60,7 +60,6 @@
 
 	onMount(() => {
 		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
-		minZoom = isMobile() ? 1 : 1.5;
 
 		//init map
 	  map = new mapboxgl.Map({
@@ -177,12 +176,11 @@
 	  // map.setPaintProperty('wrl polbnda 1m', 'fill-color', expression);
 
 	  //mouse events
-	  //map.on('mouseenter', 'signals-dots', onMouseEnter);
-	  // map.on('mouseleave', 'signals-dots', onMouseLeave);
-	  map.on('mouseenter', 'signals-dots', (e) => {
-       mouseover(e.features[0]);
-    });
-    map.on('mouseleave', 'signals-dots', mouseout);
+
+	  let hoveredStateId = null;
+
+		map.on('mousemove', 'signals-dots', mousemove);
+    map.on('mouseout', 'signals-dots', mouseout);
 	  map.on('click', 'signals-dots', (e) => {
 	  	mouseclick(e);
 	  });
@@ -201,7 +199,7 @@
 
 	function zoomToBounds() {
 		//zoom map to bounds
-		let mapPadding = (isMobile()) ? {top: 20, right: 20, bottom: 20, left: 20} : {top: 100, right: 80, bottom: 175, left: 80};
+		let mapPadding = (isMobile()) ? {top: 20, right: 20, bottom: 20, left: 20} : {top: 100, right: 80, bottom: 150, left: 80};
 		if (signalsGeoData !== undefined) {
 		  let bounds = new mapboxgl.LngLatBounds();
 			signalsGeoData.features.forEach(function(feature) {
@@ -224,28 +222,37 @@
 		return alerts;
 	}
 
-	function mouseover(feature) {
-    fHover = feature;
-    map.getCanvasContainer().style.cursor = 'pointer';
 
-    map.setFeatureState({
-      source: 'signals-source',
-      id: fHover.id
-    }, {
-      hover: true
-    });
+	function mousemove(e) {
+	  map.getCanvas().style.cursor = 'pointer';
+	  if (e.features.length > 0) {
+	    if (hoveredStateId) {
+	      map.setFeatureState({
+	        source: 'signals-source',
+	        id: hoveredStateId
+	      }, {
+	        hover: false
+	      });
+	    }
+
+	    hoveredStateId = e.features[0].id;
+	    map.setFeatureState({
+	      source: 'signals-source',
+	      id: hoveredStateId
+	    }, {
+	      hover: true
+	    });
+	  }
   }
 
   function mouseout() {
-    if (!fHover) return;
-    map.getCanvasContainer().style.cursor = '';
-    map.setFeatureState({
+		map.getCanvas().style.cursor = '';
+		map.setFeatureState({
       source: 'signals-source',
-      id: fHover.id
+      id: hoveredStateId
     }, {
       hover: false
     });
-    fHover = null;
   }
 
   function mouseclick(e) {

@@ -8,23 +8,25 @@
   let data, map, dateSlider, regions, indicators, latestDate, startDate, headerHeight;
   let filters = {region: [], indicator_name: []};
   let sliderDates = [];
-  let sliderDefault = [0,3];
   let coordsData = [];
   
   $: signalsData = [];
   $: errorMsg = '';
   $: hasHRP = true;
 
-  const numMonths = 3;
+  const numMonths = 12;
 
   const coordsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/DSCI-21-HDX-signals-alerts-pipeline/metadata/location_metadata.csv';
   const signalsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/main/metadata/signals.csv';
 
+  //set slider filter to show last 3 months of data
+  let sliderDefault = [numMonths-3,numMonths];
 
 
   Promise.all([loadCSV(coordsURL), loadCSV(signalsURL)])
     .then(([coords, signals]) => {
-      dataLoaded(coords, signals);
+      const cleanedSignals = signals.filter(d => d.iso3 !== '');
+      dataLoaded(coords, cleanedSignals);
     })
     .catch(error => {
       console.error('Error loading files:', error);
@@ -50,10 +52,12 @@
     coordsData = coords;
 
     //get latest date in data
-    signals.sort(function(a,b) {
-      return new Date(b.date) - new Date(a.date);
-    });
-    latestDate = new Date(signals[0].date);
+    // signals.sort(function(a,b) {
+    //   return new Date(b.date) - new Date(a.date);
+    // });
+    // latestDate = new Date(signals[0].date);
+    latestDate = new Date();
+    console.log(latestDate);
 
     //add coords to matched signals
     signals.forEach((signal) => {
@@ -65,6 +69,7 @@
     //set start date 3 months prior to latest date
     startDate = new Date(latestDate);
     startDate.setMonth(startDate.getMonth() - numMonths);
+    console.log('startDate',startDate, 'latestDate',latestDate)
     
     //get results within 3 months
     data = signals.filter(d => d.iso3 !== '' && new Date(d.date).getTime() >= startDate.getTime());
@@ -80,7 +85,7 @@
     const match = coordsData.find(row => {
       return row['Alpha-3 code'] === iso3
     });
-    if (match) {
+    if (match && (match.Latitude!=='NA' || match.Longitude!=='NA')) {
       return {
         lat: +match.Latitude,
         lon: +match.Longitude
@@ -196,7 +201,7 @@
   function reset() {
     const checks = d3.selectAll('input[type="checkbox"]').nodes();
     checks.forEach(check => check.checked = true);
-    sliderDefault = [0, 3];
+    sliderDefault = [numMonths-3,numMonths];
     filters = {region: '', indicator_name: '', date: [startDate, latestDate]};
     d3.select('#onlyHRP').node().checked = false;
     filterData();
@@ -234,7 +239,7 @@
     });
 
     //set only HRP checkbox status
-    hasHRP = result.some(d => d['hrp_location'] === 'TRUE');
+    hasHRP = result.some(d => d['hrp_location'] === 'True');
 
     if (result.length>0) {
       signalsData = result;
@@ -273,7 +278,7 @@
       {/if}
 
       <div class='input-wrapper'>
-        <label><input type='checkbox' id='onlyHRP' disabled={!hasHRP}> Only priority humanitarian locations</label>
+        <label class={hasHRP ? '' : 'is-disabled'}><input type='checkbox' id='onlyHRP' disabled={!hasHRP}> Only priority humanitarian locations</label>
       </div>
 
       {#if indicators}
@@ -287,10 +292,13 @@
       <div class='slider-container'>
         {#if sliderDates.length>0}
           <RangeSlider
-            all='label'
+            all='pips'
             id='dateSlider'
+            first='label'
+            float
+            last='label'
             pips 
-            max={3}
+            max={numMonths}
             range
             step={1}
             bind:values={sliderDefault}
@@ -308,8 +316,8 @@
       </div>
 
       <div class='logos'>
-        <a href='https://www.unocha.org' target='_blank'><img src='logo-ocha-blue.png' alt='OCHA' width='100'></a>
-        <a href='https://centre.humdata.org' target='_blank'><img src='logo-centre-green.png' width='160' alt='Centre for Humanitarian Data'></a>
+        <a href='https://www.unocha.org' target='_blank'><img src='logo-ocha-blue.png' alt='OCHA' width='110'></a>
+        <a href='https://centre.humdata.org' target='_blank'><img class='centre' src='logo-centre-green.png' width='150' alt='Centre for Humanitarian Data'></a>
       </div>
     </div>
     
@@ -329,7 +337,10 @@
     display: flex;
     margin-top: 30px;
     img {
-      margin-right: 20px;
+      &.centre {
+        margin-left: 25px;
+        margin-top: 12px;
+      }
     }
   }
 </style>
