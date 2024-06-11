@@ -15,7 +15,7 @@
 
 	$: maxCount = 0;
 
-	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, hoveredStateId, tooltip, tooltipError;
+	let map, mapContainer, signalsGeoData, currentSignals, countByCountry, hoveredStateId, tooltip;
 	let numFormat = d3.format(',');
 	let dateFormat = d3.utcFormat('%b %d, %Y');
 	let minMarkerSize = 8;
@@ -44,12 +44,6 @@
 		const popup = d3.select('.popup');
 		popup.style('display', 'none');
 		popup.style('opacity', 0);
-	}
-
-	export const capitalizeFirstLetter = (word) => {
-    let firstLetter = word.replace('_', ' ').charAt(0).toUpperCase();
-    let remainingLetters = word.substring(1);
-    return firstLetter + remainingLetters;
 	}
 
 	export const isMobile = () => {

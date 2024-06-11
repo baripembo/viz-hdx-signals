@@ -298,7 +298,7 @@
       {#if indicators}
         <ul>
           {#each indicators as indicator, i}
-            <li><label><input type='checkbox' id={indicator} name={i===0 ? 'selectIndicator-all' : 'selectIndicator'} on:change={onCheck} checked> {map.capitalizeFirstLetter(indicator.replace('_', ' '))}</label></li>
+            <li><label><input type='checkbox' id={indicator} name={i===0 ? 'selectIndicator-all' : 'selectIndicator'} on:change={onCheck} checked> {indicator}</label></li>
           {/each}
         </ul>
       {/if}
