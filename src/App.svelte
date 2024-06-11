@@ -20,7 +20,7 @@
   const signalsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/main/metadata/signals.csv';
 
   //set slider filter to show last 3 months of data
-  let sliderDefault = [numMonths-3,numMonths];
+  let sliderDefault = [0,numMonths];
 
 
   Promise.all([loadCSV(coordsURL), loadCSV(signalsURL)])
@@ -201,7 +201,7 @@
   function reset() {
     const checks = d3.selectAll('input[type="checkbox"]').nodes();
     checks.forEach(check => check.checked = true);
-    sliderDefault = [numMonths-3,numMonths];
+    sliderDefault = [0, numMonths];
     filters = {region: '', indicator_name: '', date: [startDate, latestDate]};
     d3.select('#onlyHRP').node().checked = false;
     filterData();
