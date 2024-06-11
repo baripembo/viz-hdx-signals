@@ -307,13 +307,13 @@ header {
   opacity: 0;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 50em;
+  width: 42em;
   z-index: 3;
   .plot,
   .map {
     display: block;
     margin: auto;
-    width: 75%;
+    width: 95%;
   }
   h2 {
     margin-top: 0;
@@ -325,7 +325,7 @@ header {
     outline: none;
   }
   .signal-container {
-    height: 360px;
+    height: 25em;
     overflow-x: hidden;
     overflow-y: scroll;
   }
