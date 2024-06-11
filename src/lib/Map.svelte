@@ -265,8 +265,7 @@
     content += '<div class="signal-container">';
     currentSignals.forEach(function(signal) {
     	let signalDate = dateFormat(new Date(signal.date));
-	    content += `<div class="signal"><h3>${signalDate}: `;
-	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}</h3>`;
+	    content += `<div class="signal"><h3>${signalDate}: ${signal.indicator_title}</h3>`;
 	    if (isValid(signal.summary_short)) content += `<p>${signal.summary_short}</p>`;
 	    if (isValid(signal.plot)) content += `<img class="plot" src="${signal.plot}" />`;
 	    if (isValid(signal.map)) content += `<img class="map" src="${signal.map}" />`;

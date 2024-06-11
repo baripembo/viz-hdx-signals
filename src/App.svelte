@@ -6,9 +6,10 @@
   import Map from './lib/Map.svelte'
 
   let data, map, dateSlider, regions, indicators, defaultStartDate, startDate, endDate, headerHeight;
-  let filters = {region: [], indicator_name: []};
+  let filters = {region: [], indicator_title: []};
   let sliderDates = [];
   let coordsData = [];
+  let namesData = [];
   
   $: signalsData = [];
   $: errorMsg = '';
@@ -19,15 +20,16 @@
 
   const coordsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/DSCI-21-HDX-signals-alerts-pipeline/metadata/location_metadata.csv';
   const signalsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/main/metadata/signals.csv';
+  const indicatorsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/main/metadata/signals_indicators.csv';
 
   //set slider filter to show last 3 months of data
   let sliderDefault = [numMonths-3,numMonths];
 
 
-  Promise.all([loadCSV(coordsURL), loadCSV(signalsURL)])
-    .then(([coords, signals]) => {
+  Promise.all([loadCSV(coordsURL), loadCSV(signalsURL), loadCSV(indicatorsURL)])
+    .then(([coords, signals, indicator_titles]) => {
       const cleanedSignals = signals.filter(d => d.iso3 !== '');
-      dataLoaded(coords, cleanedSignals);
+      dataLoaded(coords, cleanedSignals, indicator_titles);
     })
     .catch(error => {
       console.error('Error loading files:', error);
@@ -49,19 +51,22 @@
     });
   }
 
-  function dataLoaded(coords, signals) {
+  function dataLoaded(coords, signals, indicator_titles) {
     coordsData = coords;
+    namesData = indicator_titles;
 
     //sort data
     signals.sort(function(a,b) {
       return new Date(b.date) - new Date(a.date);
     });
 
-    //add coords to matched signals
+    //add coords and indicator names to matched signals
     signals.forEach((signal) => {
       let coords = findLatLong(signal.iso3);
       signal.lat = (coords!==null) ? coords.lat : null;
       signal.lon = (coords!==null) ? coords.lon : null;
+
+      signal.indicator_title = findIndicatorName(signal.indicator_id);
     });
 
     //set available date range
@@ -77,7 +82,7 @@
     data = signals.filter(d => new Date(d.date).getTime() >= startDate.getTime());
 
     //filter set of data within starting date range
-    filters = {region: [], indicator_name: [], date: [defaultStartDate, endDate]};
+    filters = {region: [], indicator_title: [], date: [defaultStartDate, endDate]};
     signalsData = signals.filter(d => new Date(d.date).getTime() >= defaultStartDate.getTime());
     
     createFilters();
@@ -85,9 +90,7 @@
   }
 
   function findLatLong(iso3) {
-    const match = coordsData.find(row => {
-      return row['Alpha-3 code'] === iso3
-    });
+    const match = coordsData.find(row => row['Alpha-3 code'] === iso3);
     if (match && (match.Latitude!=='NA' || match.Longitude!=='NA')) {
       return {
         lat: +match.Latitude,
@@ -99,18 +102,25 @@
     }
   }
 
+  function findIndicatorName(indicator_id) {
+    const match = namesData.find(row => row['indicator_id'] === indicator_id);
+    return (match) ? match.indicator_subject : null;
+  }
+
   function createFilters() {
     if (filters.region=='') {
       //get list of regions
       let regionArray = signalsData.map(d => d.region);
+      regionArray.sort();
       regionArray.unshift('All regions');
-      regions = [... new Set(regionArray)].sort();
+      regions = [... new Set(regionArray)];
     }
-    if (filters.indicator_name=='') {
+    if (filters.indicator_title=='') {
       //get list of indicators
-      let indicatorArray = signalsData.map(d => d.indicator_name);
+      let indicatorArray = signalsData.map(d => d.indicator_title);
+      indicatorArray.sort();
       indicatorArray.unshift('All datasets');
-      indicators = [... new Set(indicatorArray)].sort();
+      indicators = [... new Set(indicatorArray)];
     }
   }
 
@@ -131,7 +141,7 @@
   }
 
   function onIndicatorSelect(e) {
-    filters.indicator_name = (e.target.value=='All datasets') ? '' : e.target.value.toLowerCase();
+    filters.indicator_title = (e.target.value=='All datasets') ? '' : e.target.value.toLowerCase();
     filterData();
   }
 
@@ -145,7 +155,6 @@
     let startTime = new Date(sliderDates[selected[0]]).getTime();
     let endTime = new Date(sliderDates[selected[1]]).getTime();
     filters.date = [startTime, endTime];
-    //filterData();
   }
 
   function onCheck(e) {
@@ -168,7 +177,7 @@
 
   function apply() {
     filters.region = [];
-    filters.indicator_name = [];
+    filters.indicator_title = [];
 
     //get regions
     const regionChecks = d3.selectAll(`input[name="selectRegion"]`).nodes();
@@ -179,7 +188,7 @@
     //get indicators
     const indicatorChecks = d3.selectAll(`input[name="selectIndicator"]`).nodes();
     indicatorChecks.forEach(check => {
-      if (check.checked) filters.indicator_name.push(check.id);
+      if (check.checked) filters.indicator_title.push(check.id);
     })
 
     //get saved date values from onDateSelect
@@ -188,11 +197,11 @@
     filters.hrp_location = (d3.select('#onlyHRP').node().checked) ? 'True' : '';
 
     //apply filters
-    if (filters.region.length<1 || filters.indicator_name.length<1) {
+    if (filters.region.length<1 || filters.indicator_title.length<1) {
       if (filters.region.length<1) {
         errorMsg = 'Please select at least one region';
       }
-      if (filters.indicator_name.length<1) {
+      if (filters.indicator_title.length<1) {
         errorMsg = 'Please select at least one dataset';
       }
     }
@@ -205,7 +214,7 @@
     const checks = d3.selectAll('input[type="checkbox"]').nodes();
     checks.forEach(check => check.checked = true);
     sliderDefault = [numMonths-3, numMonths];
-    filters = {region: '', indicator_name: '', date: [defaultStartDate, endDate]};
+    filters = {region: '', indicator_title: '', date: [defaultStartDate, endDate]};
     d3.select('#onlyHRP').node().checked = false;
     filterData();
   }
@@ -221,7 +230,7 @@
       
       for (const [key, value] of Object.entries(filters)) {
         if (Array.isArray(value)) {
-          if (key==='region' || key==='indicator_name') {
+          if (key==='region' || key==='indicator_title') {
             if (!value.includes(d[key])) validSignal = false;
           }
           if (key==='date') {
@@ -340,7 +349,8 @@
   .logos {
     align-items: center;
     display: flex;
-    margin-top: 30px;
+    margin-bottom: 20px;
+    margin-top: auto;
     img {
       &.centre {
         margin-left: 25px;

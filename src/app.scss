@@ -208,6 +208,8 @@ header {
 }
 .filter-list {
   background-color: #FFF;
+  display: flex;
+  flex-flow: column;
   padding: 10px 0 0 30px;
   overflow-y: scroll;
   ul {
