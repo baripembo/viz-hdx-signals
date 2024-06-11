@@ -5,7 +5,7 @@
   import RangeSlider from 'svelte-range-slider-pips'
   import Map from './lib/Map.svelte'
 
-  let data, map, dateSlider, regions, indicators, latestDate, startDate, headerHeight;
+  let data, map, dateSlider, regions, indicators, defaultStartDate, startDate, endDate, headerHeight;
   let filters = {region: [], indicator_name: []};
   let sliderDates = [];
   let coordsData = [];
@@ -14,13 +14,14 @@
   $: errorMsg = '';
   $: hasHRP = true;
 
+  //set number of months to show
   const numMonths = 12;
 
   const coordsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/DSCI-21-HDX-signals-alerts-pipeline/metadata/location_metadata.csv';
   const signalsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/main/metadata/signals.csv';
 
   //set slider filter to show last 3 months of data
-  let sliderDefault = [0,numMonths];
+  let sliderDefault = [numMonths-3,numMonths];
 
 
   Promise.all([loadCSV(coordsURL), loadCSV(signalsURL)])
@@ -51,13 +52,10 @@
   function dataLoaded(coords, signals) {
     coordsData = coords;
 
-    //get latest date in data
-    // signals.sort(function(a,b) {
-    //   return new Date(b.date) - new Date(a.date);
-    // });
-    // latestDate = new Date(signals[0].date);
-    latestDate = new Date();
-    console.log(latestDate);
+    //sort data
+    signals.sort(function(a,b) {
+      return new Date(b.date) - new Date(a.date);
+    });
 
     //add coords to matched signals
     signals.forEach((signal) => {
@@ -66,16 +64,21 @@
       signal.lon = (coords!==null) ? coords.lon : null;
     });
 
-    //set start date 3 months prior to latest date
-    startDate = new Date(latestDate);
-    startDate.setMonth(startDate.getMonth() - numMonths);
-    console.log('startDate',startDate, 'latestDate',latestDate)
-    
-    //get results within 3 months
-    data = signals.filter(d => d.iso3 !== '' && new Date(d.date).getTime() >= startDate.getTime());
+    //set available date range
+    endDate = new Date();
+    startDate = new Date(endDate);
+    startDate.setMonth(endDate.getMonth() - numMonths);
 
-    signalsData = data;
-    console.log('signalsData', signalsData);
+    //set starting date range - 3 months prior to latest date by default
+    defaultStartDate = new Date(endDate);
+    defaultStartDate.setMonth(endDate.getMonth() - 3);
+    
+    //filter full data within available date range
+    data = signals.filter(d => new Date(d.date).getTime() >= startDate.getTime());
+
+    //filter set of data within starting date range
+    filters = {region: [], indicator_name: [], date: [defaultStartDate, endDate]};
+    signalsData = signals.filter(d => new Date(d.date).getTime() >= defaultStartDate.getTime());
     
     createFilters();
     createDateSlider();
@@ -133,7 +136,7 @@
   }
 
   function onHRPSelect(e) {
-    filters.hrp_location = (e.target.checked) ? 'TRUE' : '';
+    filters.hrp_location = (e.target.checked) ? 'True' : '';
     filterData();
   }
 
@@ -201,8 +204,8 @@
   function reset() {
     const checks = d3.selectAll('input[type="checkbox"]').nodes();
     checks.forEach(check => check.checked = true);
-    sliderDefault = [0, numMonths];
-    filters = {region: '', indicator_name: '', date: [startDate, latestDate]};
+    sliderDefault = [numMonths-3, numMonths];
+    filters = {region: '', indicator_name: '', date: [defaultStartDate, endDate]};
     d3.select('#onlyHRP').node().checked = false;
     filterData();
   }
@@ -210,6 +213,8 @@
   function filterData() {
     errorMsg = '';
     map.closePopup();
+
+    //console.log('--', filters)
 
     let result = data.filter(d => {
       let validSignal = true;
