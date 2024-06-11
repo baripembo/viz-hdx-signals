@@ -275,7 +275,7 @@
       <div class='col-3 logo'><a href='https://data.humdata.org/signals' target='_blank'><img src='HDXSignalsLogo_white.png' alt='HDX Signals' /></a></div>
       <div class='col-7 description'>
         <p><a href='https://data.humdata.org/signals' target='_blank'>HDX Signals</a> monitors key datasets and generates automated emails when significant, negative changes are detected.</p>
-        <p>Explore recent and historical signals in the map below, and click on any country bubble to see signals content and links to the original email. Read more about HDX Signals on <a href='https://data.humdata.org/signals' target='_blank'>our website</a>.</p>
+        <p>Explore recent and historical signals in the map below, and click on any country bubble to see signals content and links to the original email. Access all Signals data directly on <a href='https://data.humdata.org/dataset/hdx-signals' target='_blank'>HDX</a>.</p>
       </div>
     </div>
   </header>
