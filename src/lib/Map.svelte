@@ -75,7 +75,11 @@
 
 		  //initPolys();
 		  loadFeatures();
+
+  		//map.setLayoutProperty('Countries 2-4', 'visibility', 'none');
 	  });
+
+
 	});
 
 	// function initPolys() {
