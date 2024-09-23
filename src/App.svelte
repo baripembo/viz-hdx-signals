@@ -2,97 +2,137 @@
   import * as d3 from 'd3';
   import Papa from 'papaparse'
   import { onMount } from 'svelte';
-  import KeyFigure from './lib/KeyFigure.svelte'
   import RangeSlider from 'svelte-range-slider-pips'
   import Map from './lib/Map.svelte'
 
-  let data, map, dateSlider, slider, dates, regions, indicators, latestDate, startDate, headerHeight;
-  let filters = {region: '', indicator_name: ''};
-
+  let data, map, dateSlider, regions, indicators, defaultStartDate, startDate, endDate, headerHeight;
+  let filters = {region: [], indicator_title: []};
   let sliderDates = [];
-  let sliderDefault = [0,3];
+  let coordsData = [];
+  let namesData = [];
   
   $: signalsData = [];
+  $: errorMsg = '';
   $: hasHRP = true;
 
-  Papa.parse('signals.csv', {
-    header: true,
-    download: true,
-    complete: function(results) {
-      //get latest date in data
-      results.data.sort(function(a,b) {
-        return new Date(b.date) - new Date(a.date);
+  //set number of months to show
+  const numMonths = 12;
+
+  const coordsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/DSCI-21-HDX-signals-alerts-pipeline/metadata/location_metadata.csv';
+  const signalsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/main/metadata/signals.csv';
+  const indicatorsURL = 'https://raw.githubusercontent.com/OCHA-DAP/hdx-signals-alerts/main/metadata/signals_indicators.csv';
+
+  //set slider filter to show last 3 months of data
+  let sliderDefault = [numMonths-3,numMonths];
+
+
+  Promise.all([loadCSV(coordsURL), loadCSV(signalsURL), loadCSV(indicatorsURL)])
+    .then(([coords, signals, indicator_titles]) => {
+      const cleanedSignals = signals.filter(d => d.iso3 !== '');
+      dataLoaded(coords, cleanedSignals, indicator_titles);
+    })
+    .catch(error => {
+      console.error('Error loading files:', error);
+    });
+
+
+  function loadCSV(filePath) {
+    return new Promise((resolve, reject) => {
+      Papa.parse(filePath, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          resolve(results.data);
+        },
+        error: function(error) {
+          reject(error);
+        }
       });
-      latestDate = new Date(results.data[0].date);
+    });
+  }
 
-      //set start date 3 months prior to latest date
-      startDate = new Date(latestDate);
-      startDate.setMonth(startDate.getMonth() - 3);
-      
-      //get results within 3 months
-      data = results.data.filter(d => d.iso3 !== '' && new Date(d.date).getTime() >= startDate.getTime());
+  function dataLoaded(coords, signals, indicator_titles) {
+    coordsData = coords;
+    namesData = indicator_titles;
 
-      signalsData = data;
-      //console.log(signalsData);
-      
-      createFilters();
-      createDateSlider();
+    //sort data
+    signals.sort(function(a,b) {
+      return new Date(b.date) - new Date(a.date);
+    });
+
+    //add coords and indicator names to matched signals
+    signals.forEach((signal) => {
+      let coords = findLatLong(signal.iso3);
+      signal.lat = (coords!==null) ? coords.lat : null;
+      signal.lon = (coords!==null) ? coords.lon : null;
+
+      signal.indicator_title = findIndicatorName(signal.indicator_id);
+    });
+
+    //set available date range
+    endDate = new Date();
+    startDate = new Date(endDate);
+    startDate.setMonth(endDate.getMonth() - numMonths);
+
+    //set starting date range - 3 months prior to latest date by default
+    defaultStartDate = new Date(endDate);
+    defaultStartDate.setMonth(endDate.getMonth() - 3);
+    
+    //filter full data within available date range
+    data = signals.filter(d => new Date(d.date).getTime() >= startDate.getTime());
+
+    //filter set of data within starting date range
+    filters = {region: [], indicator_title: [], date: [defaultStartDate, endDate]};
+    signalsData = signals.filter(d => new Date(d.date).getTime() >= defaultStartDate.getTime());
+    
+    createFilters();
+    createDateSlider();
+  }
+
+  function findLatLong(iso3) {
+    const match = coordsData.find(row => row['Alpha-3 code'] === iso3);
+    if (match && (match.Latitude!=='NA' || match.Longitude!=='NA')) {
+      return {
+        lat: +match.Latitude,
+        lon: +match.Longitude
+      };
+    } 
+    else {
+      return null;
     }
-  })
+  }
+
+  function findIndicatorName(indicator_id) {
+    const match = namesData.find(row => row['indicator_id'] === indicator_id);
+    return (match) ? match.indicator_subject : null;
+  }
 
   function createFilters() {
     if (filters.region=='') {
       //get list of regions
       let regionArray = signalsData.map(d => d.region);
+      regionArray.sort();
       regionArray.unshift('All regions');
-      regions = [... new Set(regionArray)].sort();
+      regions = [... new Set(regionArray)];
     }
-    if (filters.indicator_name=='') {
+    if (filters.indicator_title=='') {
       //get list of indicators
-      let indicatorArray = signalsData.map(d => d.indicator_name);
+      let indicatorArray = signalsData.map(d => d.indicator_title);
+      indicatorArray.sort();
       indicatorArray.unshift('All datasets');
-      indicators = [... new Set(indicatorArray)].sort();
+      indicators = [... new Set(indicatorArray)];
     }
   }
 
   function createDateSlider() {
-    //const sliderHeight = 580;
-    //dates = dates.sort((a, b) => a.getTime() - b.getTime());
-    const listLength = 4; // months
+    const listLength = numMonths + 1; // months
     const dates = [];
     for(let i = 0; i < listLength; i++) {
-        const itemDate = new Date(startDate); // starting today
-        itemDate.setMonth(itemDate.getMonth() + i);
-        dates.push(itemDate);
+      const itemDate = new Date(startDate);
+      itemDate.setMonth(itemDate.getMonth() + i);
+      dates.push(itemDate);
     }
     sliderDates = dates;
-
-    // slider = sliderHorizontal()
-    //   .min(startDate)
-    //   .max(latestDate)
-    //   //.tickFormat(d3.utcFormat('%b %d, %Y'))
-    //   .tickFormat(d3.utcFormat('%b %Y'))
-    //   //.ticks(3)
-    //   .step(1)
-    //   .tickValues(dates)
-    //   .marks(dates)
-    //   .default([latestDate, startDate])
-    //   .width(200)
-    //   //.height(sliderHeight-50)
-    //   .handle(d3.symbol().type(d3.symbolCircle).size(200)())
-    //   .fill('#007CE0')
-    //   .on('end', (val) => {
-    //     onDateSelect(val)
-    //   });
-
-    // const g = d3.select(dateSlider)
-    //   .append('svg')
-    //   .attr('width', 250)
-    //   .attr('height', 70)
-    //   .append('g')
-    //   .attr('transform', 'translate(25,25)');
-
-    // g.call(slider);
   }
 
   function onRegionSelect(e) {
@@ -101,12 +141,12 @@
   }
 
   function onIndicatorSelect(e) {
-    filters.indicator_name = (e.target.value=='All datasets') ? '' : e.target.value.toLowerCase();
+    filters.indicator_title = (e.target.value=='All datasets') ? '' : e.target.value.toLowerCase();
     filterData();
   }
 
   function onHRPSelect(e) {
-    filters.hrp_country = (e.target.checked) ? 'TRUE' : '';
+    filters.hrp_location = (e.target.checked) ? 'True' : '';
     filterData();
   }
 
@@ -115,7 +155,19 @@
     let startTime = new Date(sliderDates[selected[0]]).getTime();
     let endTime = new Date(sliderDates[selected[1]]).getTime();
     filters.date = [startTime, endTime];
-    filterData();
+  }
+
+  function onCheck(e) {
+    let target = e.target;
+    if (target.id==='All regions' || target.id==='All datasets') {
+      let group = target.name.split('-')[0];
+      let checks = d3.selectAll(`input[name="${group}"]`).nodes();
+      checks.forEach(check => check.checked = target.checked);
+    }
+    else {
+      const checks = d3.selectAll(`input[name="${target.name}"]`).nodes();
+      d3.select(`input[name="${target.name}-all"]`).node().checked = Array.from(checks).every(check => check.checked);
+    }
   }
 
   //formatter for date slider
@@ -123,30 +175,72 @@
     return d3.utcFormat('%b %Y')(sliderDates[value]);
   }
 
+  function apply() {
+    filters.region = [];
+    filters.indicator_title = [];
+
+    //get regions
+    const regionChecks = d3.selectAll(`input[name="selectRegion"]`).nodes();
+    regionChecks.forEach(check => {
+      if (check.checked) filters.region.push(check.id);
+    })
+
+    //get indicators
+    const indicatorChecks = d3.selectAll(`input[name="selectIndicator"]`).nodes();
+    indicatorChecks.forEach(check => {
+      if (check.checked) filters.indicator_title.push(check.id);
+    })
+
+    //get saved date values from onDateSelect
+
+    //get hrp
+    filters.hrp_location = (d3.select('#onlyHRP').node().checked) ? 'True' : '';
+
+    //apply filters
+    if (filters.region.length<1 || filters.indicator_title.length<1) {
+      if (filters.region.length<1) {
+        errorMsg = 'Please select at least one region';
+      }
+      if (filters.indicator_title.length<1) {
+        errorMsg = 'Please select at least one dataset';
+      }
+    }
+    else {
+      filterData();
+    }
+  }
 
   function reset() {
-    d3.select('#regionSelect').node().value = 'All regions';
-    d3.select('#indicatorSelect').node().value = 'All datasets';
-    sliderDefault = [0, 3];
-    filters = {region: '', indicator_name: '', date: [startDate, latestDate]};
+    const checks = d3.selectAll('input[type="checkbox"]').nodes();
+    checks.forEach(check => check.checked = true);
+    sliderDefault = [numMonths-3, numMonths];
+    filters = {region: '', indicator_title: '', date: [defaultStartDate, endDate]};
     d3.select('#onlyHRP').node().checked = false;
     filterData();
   }
 
   function filterData() {
+    errorMsg = '';
     map.closePopup();
+
+    //console.log('--', filters)
 
     let result = data.filter(d => {
       let validSignal = true;
       
       for (const [key, value] of Object.entries(filters)) {
         if (Array.isArray(value)) {
-          let signalTime = new Date(d[key]).getTime();
-          if (signalTime < value[0] || signalTime > value[1])
-            validSignal = false;
+          if (key==='region' || key==='indicator_title') {
+            if (!value.includes(d[key])) validSignal = false;
+          }
+          if (key==='date') {
+            let signalTime = new Date(d[key]).getTime();
+            if (signalTime < value[0] || signalTime > value[1])
+              validSignal = false;
+            }
         }
         else {
-          if (value!=='' && value!==d[key])
+          if (value!=='' && value.toLowerCase()!==d[key].toLowerCase())
             validSignal = false;
         }
         // else if (typeof value === 'function') {
@@ -159,113 +253,122 @@
     });
 
     //set only HRP checkbox status
-    hasHRP = result.some(d => d['hrp_country'] === 'TRUE');
+    hasHRP = result.some(d => d['hrp_location'] === 'True');
 
     if (result.length>0) {
       signalsData = result;
     }
     else {
-      map.showPopup(`There are no ${filters.indicator_name.replace('_', ' ')} signals in the ${filters.region} region for this selected time period`, true);
+      errorMsg = 'There are no signals to display, please widen your selection';
     }
-
-    //createFilters();
   }
+
+
+  function initTracking() {
+    //initialize mixpanel
+    var MIXPANEL_TOKEN = window.location.hostname=='data.humdata.org'? '5cbf12bc9984628fb2c55a49daf32e74' : '99035923ee0a67880e6c05ab92b6cbc0';
+    mixpanel.init(MIXPANEL_TOKEN);
+    mixpanel.track('page view', {
+      'page title': document.title,
+      'page type': 'datavis'
+    });
+  }
+
+  onMount(() => {
+    d3.select('.filter-list').node().style.height = (map.isMobile()) ? ((window.innerHeight - headerHeight)*0.4) + 'px' : window.innerHeight - (d3.select('header').node().getBoundingClientRect().height) + 'px';
+
+    initTracking();
+  });
+
 </script>
 
 <main>
   <header bind:clientHeight={headerHeight}>
-    <div class='intro'>
-      <div class='logo'><a href='https://data.humdata.org/signals' target='_blank'><img src='HDXSignalsLogo_V2.png' alt='HDX Signals' /></a></div>
-      <div class='description'>
+    <div class='grid-container'>
+      <div class='col-3 logo'><a href='https://data.humdata.org/signals' target='_blank'><img src='HDXSignalsLogo_white.png' alt='HDX Signals' /></a></div>
+      <div class='col-7 description'>
         <p><a href='https://data.humdata.org/signals' target='_blank'>HDX Signals</a> monitors key datasets and generates automated emails when significant, negative changes are detected.</p>
-        <p>Explore recent and historical signals in the map below, and click on any country bubble to see signals content and links to the original email. Read more about HDX Signals on <a href='https://data.humdata.org/signals' target='_blank'>our website</a>.</p>
+        <p>Explore recent and historical signals in the map below, and click on any country bubble to see signals content and links to the original email. Access all Signals data directly on <a href='https://data.humdata.org/dataset/hdx-signals' target='_blank'>HDX</a>.</p>
       </div>
     </div>
-    <h5>Filter by:</h5>
-    <div class='filters'>
+  </header>
+
+  <div class='grid-container'>
+    <div class='col-3 filter-list'>
+      <h5>Filter by:</h5>
       {#if regions}
-        <div class='select-wrapper'>
-          <select on:change={onRegionSelect} id='regionSelect'>
-            {#each regions as region}
-              <option value={region}>{region}</option>
-            {/each}
-          </select>
-        </div>
+        <ul>
+          {#each regions as region, i}
+            <li><label><input type='checkbox' id={region} name={i===0 ? 'selectRegion-all' : 'selectRegion'} on:change={onCheck} checked> {region}</label></li>
+          {/each}
+        </ul>
       {/if}
 
+      <div class='input-wrapper'>
+        <label class={hasHRP ? '' : 'is-disabled'}><input type='checkbox' id='onlyHRP' disabled={!hasHRP}> Only priority humanitarian locations</label>
+      </div>
+
       {#if indicators}
-        <div class='select-wrapper'>
-          <select on:change={onIndicatorSelect} id='indicatorSelect'>
-            {#each indicators as indicator}
-              <option value={indicator}>{map.capitalizeFirstLetter(indicator.replace('_', ' '))}</option>
-            {/each}
-          </select>
-        </div>
+        <ul>
+          {#each indicators as indicator, i}
+            <li><label><input type='checkbox' id={indicator} name={i===0 ? 'selectIndicator-all' : 'selectIndicator'} on:change={onCheck} checked> {indicator}</label></li>
+          {/each}
+        </ul>
       {/if}
 
       <div class='slider-container'>
         {#if sliderDates.length>0}
           <RangeSlider
-            all='label'
+            all='pips'
             id='dateSlider'
+            first='label'
+            float
+            last='label'
             pips 
-            max={3}
+            max={numMonths}
             range
             step={1}
             bind:values={sliderDefault}
-            {formatter} 
             on:change={onDateSelect} 
+            {formatter} 
           />
         {/if}
       </div>
 
-      <div class='input-wrapper'>
-        <input type='checkbox' id='onlyHRP' on:change={onHRPSelect} disabled={!hasHRP}> <label for='onlyHRP'>Only priority humanitarian locations</label>
+      <span class='error-msg'>{errorMsg}</span>
+      
+      <div class='buttons'>
+        <button class='btn-reset' on:click={reset}>Reset</button>
+        <button class='btn-apply' on:click={apply}>Apply</button>
       </div>
 
-      <button class='btn-reset' on:click={reset}>Reset</button>
+      <div class='logos'>
+        <a href='https://www.unocha.org' target='_blank'><img src='logo-ocha-blue.png' alt='OCHA' width='110'></a>
+        <a href='https://centre.humdata.org' target='_blank'><img class='centre' src='logo-centre-green.png' width='150' alt='Centre for Humanitarian Data'></a>
+      </div>
     </div>
-
-    <!-- <div class='filters-secondary'></div> -->
-  </header>
-  
-  <div class='map'>
-    <Map bind:this={map} {signalsData} headerHeight={headerHeight} />
+    
+    <div class='col-9 map'>
+      <Map bind:this={map} {signalsData} headerHeight={headerHeight} />
+    </div>
   </div>
+
 </main>
 
 <style lang='scss'>
   main {
     position: relative;
   }
-  .filters,
-  .filters-secondary {
+  .logos {
     align-items: center;
     display: flex;
-  }
-  .slider-container {
-    margin: 0 40px;
-    width: 250px;
-  }
-  .btn-reset {
-    margin-left: auto;
-  }
-  .intro {
-    align-items: flex-start;
-    display: flex;
-    padding-top: 10px;
-  }
-  .logo {
-    flex: 0 0 25%;
+    margin-bottom: 20px;
+    margin-top: auto;
     img {
-      height: auto;
-      margin: 16px 0 0;
-      max-width: 100%; 
-      width: 70%;
+      &.centre {
+        margin-left: 25px;
+        margin-top: 12px;
+      }
     }
-  }
-  .description {
-    flex: 1;
-    padding-left: 20px;
   }
 </style>

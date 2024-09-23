@@ -15,13 +15,16 @@
 
 	$: maxCount = 0;
 
-	let map, mapContainer, signalsGeoData, hoverTimer, currentSignals, countByCountry, fHover, tooltip, tooltipError;
+	let map, mapContainer, signalsGeoData, currentSignals, countByCountry, hoveredStateId, tooltip;
 	let numFormat = d3.format(',');
 	let dateFormat = d3.utcFormat('%b %d, %Y');
 	let minMarkerSize = 8;
 	let maxMarkerSize = 20;
+	let minZoom = 1;
 
-	$: if (mapContainer) mapContainer.style.height = window.innerHeight - (headerHeight + 20) + 'px';
+	$: if (mapContainer) {
+		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
+	}
 
 	let data = signalsData;
 	$: if (data != signalsData) {  
@@ -29,13 +32,9 @@
     updateFeatures();
 	}
 
+
 	export const showPopup = (msg, isError) => {
 		const popup = d3.select('.popup');
-
-		//reset height
-		// const h = (isError) ? '75px' : '420px';
-		// popup.style('height', h);
-
 		popup.select('.popup-content').html(msg);
 		popup.style('display', 'block');
 		popup.style('opacity', 1);
@@ -47,14 +46,14 @@
 		popup.style('opacity', 0);
 	}
 
-	export const capitalizeFirstLetter = (word) => {
-    let firstLetter = word.replace('_', ' ').charAt(0).toUpperCase();
-    let remainingLetters = word.substring(1);
-    return firstLetter + remainingLetters;
+	export const isMobile = () => {
+    const userAgentCheck = /Mobi|Android/i.test(navigator.userAgent);
+    const screenSizeCheck = window.matchMedia("(max-width: 767px)").matches;
+    return userAgentCheck || screenSizeCheck;
 	}
 
 	onMount(() => {
-		mapContainer.style.height = window.innerHeight - (headerHeight + 20) + 'px';
+		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
 
 		//init map
 	  map = new mapboxgl.Map({
@@ -62,25 +61,13 @@
 	    style: `mapbox://styles/humdata/cl3lpk27k001k15msafr9714b`,
 	    center: center,
 	    zoom: zoom,
-	    minZoom: 1.5,
+	    minZoom: minZoom,
 	    maxZoom: 5.5
 	  });
 
 	  map.addControl(new mapboxgl.NavigationControl({showCompass: false}))
 	     .addControl(new mapboxgl.AttributionControl(), 'bottom-left');
 
-	  // tooltip = new mapboxgl.Popup({
-		// 	closeButton: true,
-		// 	closeOnClick: true,
-		// 	className: 'map-tooltip'
-		// });
-
-		// tooltipError = new mapboxgl.Popup({
-		// 	closeButton: true,
-		// 	closeOnClick: true,
-		// 	closeOnMove: true,
-		// 	className: 'map-tooltip-error'
-		// });
 
 	  map.on('load', function() {
 	    console.log('Map loaded')
@@ -88,7 +75,11 @@
 
 		  //initPolys();
 		  loadFeatures();
+
+  		//map.setLayoutProperty('Countries 2-4', 'visibility', 'none');
 	  });
+
+
 	});
 
 	// function initPolys() {
@@ -183,12 +174,11 @@
 	  // map.setPaintProperty('wrl polbnda 1m', 'fill-color', expression);
 
 	  //mouse events
-	  //map.on('mouseenter', 'signals-dots', onMouseEnter);
-	  // map.on('mouseleave', 'signals-dots', onMouseLeave);
-	  map.on('mouseenter', 'signals-dots', (e) => {
-       mouseover(e.features[0]);
-    });
-    map.on('mouseleave', 'signals-dots', mouseout);
+
+	  let hoveredStateId = null;
+
+		map.on('mousemove', 'signals-dots', mousemove);
+    map.on('mouseout', 'signals-dots', mouseout);
 	  map.on('click', 'signals-dots', (e) => {
 	  	mouseclick(e);
 	  });
@@ -207,12 +197,13 @@
 
 	function zoomToBounds() {
 		//zoom map to bounds
+		let mapPadding = (isMobile()) ? {top: 20, right: 20, bottom: 20, left: 20} : {top: 100, right: 80, bottom: 150, left: 80};
 		if (signalsGeoData !== undefined) {
 		  let bounds = new mapboxgl.LngLatBounds();
 			signalsGeoData.features.forEach(function(feature) {
 			  bounds.extend(feature.geometry.coordinates);
 			});
-			map.fitBounds(bounds, {padding: {top: 100, right: 80, bottom: 175, left: 80}, duration: 500});
+			map.fitBounds(bounds, {padding: mapPadding, duration: 500});
 		}
 	}
 
@@ -229,28 +220,37 @@
 		return alerts;
 	}
 
-	function mouseover(feature) {
-    fHover = feature;
-    map.getCanvasContainer().style.cursor = 'pointer';
 
-    map.setFeatureState({
-      source: 'signals-source',
-      id: fHover.id
-    }, {
-      hover: true
-    });
+	function mousemove(e) {
+	  map.getCanvas().style.cursor = 'pointer';
+	  if (e.features.length > 0) {
+	    if (hoveredStateId) {
+	      map.setFeatureState({
+	        source: 'signals-source',
+	        id: hoveredStateId
+	      }, {
+	        hover: false
+	      });
+	    }
+
+	    hoveredStateId = e.features[0].id;
+	    map.setFeatureState({
+	      source: 'signals-source',
+	      id: hoveredStateId
+	    }, {
+	      hover: true
+	    });
+	  }
   }
 
   function mouseout() {
-    if (!fHover) return;
-    map.getCanvasContainer().style.cursor = '';
-    map.setFeatureState({
+		map.getCanvas().style.cursor = '';
+		map.setFeatureState({
       source: 'signals-source',
-      id: fHover.id
+      id: hoveredStateId
     }, {
       hover: false
     });
-    fHover = null;
   }
 
   function mouseclick(e) {
@@ -258,24 +258,27 @@
 		currentSignals = getAlerts(iso3);
 
     let numSignals = getNumAlerts(currentSignals[0].iso3)[0].alert_count;
-    let content = `<h2>${currentSignals[0].country} <span>(${numSignals} ${numSignals>1 ? 'signals' : 'signal'})</span></h2>`;
+    let content = `<h2>${currentSignals[0].location} <span>(${numSignals} ${numSignals>1 ? 'signals' : 'signal'})</span></h2>`;
 
     content += '<div class="signal-container">';
     currentSignals.forEach(function(signal) {
     	let signalDate = dateFormat(new Date(signal.date));
-	    content += `<div class="signal"><h3>${signalDate}: `;
-	    content += `${capitalizeFirstLetter(signal.indicator_name.replace('_', ' '))}</h3>`;
-	    if (signal.summary_short!=='NA') content += `<p>${signal.summary_short}</p>`;
-	    if (signal.plot_url!=='NA') content += `<img class="plot" src="${signal.plot_url}" />`;
-	    if (signal.map_url!=='NA') content += `<img class="map" src="${signal.map_url}" />`;
-	    if (signal.campaign_url_archive!=='NA') content += `<p><a href="${signal.campaign_url_archive}" target="_blank">Go to the campaign</a></p>`;
-	    if (signal.further_information!=='NA') content += `${signal.further_information}`;
+	    content += `<div class="signal"><h3>${signalDate}: ${signal.indicator_title}</h3>`;
+	    if (isValid(signal.summary_short)) content += `<p>${signal.summary_short}</p>`;
+	    if (isValid(signal.plot)) content += `<img class="plot" src="${signal.plot}" />`;
+	    if (isValid(signal.map)) content += `<img class="map" src="${signal.map}" />`;
+	    if (isValid(signal.campaign_url)) content += `<p><a href="${signal.campaign_url}" target="_blank">Go to the email</a></p>`;
+	    if (isValid(signal.further_information)) content += `${signal.further_information}`;
 	    content += '</div>';
     })
     content += '</div>';
 
     //set popup content
     showPopup(content);
+  }
+
+  function isValid(url) {
+  	return (url!=='NA' && url!=='nan' && url!==undefined && url!=='');
   }
 
   onMount(() => {

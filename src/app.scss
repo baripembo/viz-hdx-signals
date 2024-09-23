@@ -10,7 +10,7 @@ html {
 
 :root {
   color: #000;
-  font-family: 'Source Sans 3', sans-serif;
+  font-family: 'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 16px;
   font-weight: 400;
   line-height: 18px;
@@ -30,7 +30,7 @@ html {
 a {
   font-weight: 500;
   color: #007CE0;
-  text-decoration: inherit;
+  text-decoration: underline;
   &:hover {
     color: #00447A;
   }
@@ -43,21 +43,16 @@ body {
   overflow: hidden;
 }
 
-header {
-  margin: 0 50px 20px;
-}
-
 h1 {
-  font-family: 'Gotham-Bold', sans-serif;
+  font-family: 'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 24px;
   margin: 30px 0;
 }
 
 h2 {
-  color: #333;
-  font-family: 'Gotham-Bold', sans-serif;
-  font-weight: 400;
-  font-size: 16px;
+  color: #007ce0;
+  font-weight: 700;
+  font-size: 18px;
   &.header {
     background-color: #EDF6FD;
     border-bottom: 1px solid #CCC;
@@ -67,15 +62,14 @@ h2 {
     padding: 0 15px;
   }
   span {
-    font-size: 14px;
-    font-family: 'Gotham-Light', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
   }
 }
 h3 {
   color: #000;
-  font-family: 'Gotham-Bold', sans-serif;
-  font-size: 14px;
-  font-weight: normal;
+  font-size: 18px;
+  font-weight: 700;
   line-height: 21px;
   margin: 0px 0px 10px; 
 }
@@ -84,13 +78,13 @@ h4 {
   margin-top: 0;
 }
 h5{
+  color: #666;
   font-size: 14px;
-  font-family: 'Gotham-Light', sans-serif;
+  font-weight: 400;
   margin: 0;
 }
 .small {
   color: #888;
-  font-family: 'Source Sans 3', sans-serif;
   font-size: 12px;
   line-height: 14px;
 }
@@ -151,7 +145,7 @@ select {
   background-color: #FFF;
   border-color: #CCC;
   border-radius: 8px;
-  font: 700 18px 'Source Sans Pro', sans-serif;
+  font: 700 18px 'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   height: 48px;
   padding: 0 20px;
   position: relative;
@@ -163,7 +157,7 @@ button {
   border: 1px solid #007CE0;
   border-radius: 8px;
   cursor: pointer;
-  font: 700 16px 'Source Sans Pro', sans-serif;
+  font: 700 16px 'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   height: 38px;
   padding: 0 20px;
   text-decoration: none;
@@ -191,95 +185,104 @@ button {
   box-shadow: 0 0 1px rgba(255, 255, 255, .5);
 }
 
+.slider-container {
+  padding: 20px 35px 15px 12px;
+  width: 100%;
+}
+
+
+header {
+  background-color: #007CE0;
+  color: #FFF;
+  padding: 10px 30px;
+  a {
+    color: #FFF;
+  }
+}
+
+.logo {
+  padding: 16px 30px 0 0;
+  img {
+    width: 70%;
+  }
+}
+.filter-list {
+  background-color: #FFF;
+  display: flex;
+  flex-flow: column;
+  padding: 10px 0 0 30px;
+  overflow-y: scroll;
+  ul {
+    padding-left: 0;      
+    li {
+      list-style-type: none;
+      padding-left: 16px;
+      &:first-child {
+        padding-left: 0;
+      }
+    }
+  }
+  label {      
+    display: inline-block;
+    margin: 0 18px 5px;
+    input[type='checkbox'] {
+      margin-left: -18px;
+  }
+    &.is-disabled {
+      color: #999;
+    }
+  }
+}
+.buttons {
+  margin-right: 30px;
+  text-align: right;
+  button {
+    margin: 0 0 20px 10px;
+  }
+}
+.error-msg {
+  color: #F2645A;
+  display: block;
+  font-weight: 700;
+  margin: 0 30px 10px 0;
+  text-align: right;
+}
 
 .map {
   height: 100%;
   position: relative;
 }
-.map-tooltip,
-.map-tooltip-error {
-  max-width: none !important;
-  z-index: 3;
-  .mapboxgl-popup-content {
-    border-radius: 8px;
-    box-shadow: 0 0 8px rgba(0,0,0,.3);
-    font-family: 'Source Sans 3', sans-serif;
-    font-weight: normal;
-    padding: 15px;
+
+.legend-container {
+  background-color: rgba(255,255,255,0.8);
+  bottom: 20px;
+  font-size: 14px;
+  height: 105px;
+  position: absolute;
+  padding: 15px;
+  right: 50px;
+  width: 175px;
+  z-index: 2;
+  circle {
+    fill: none;
+    stroke: #007CE0;
   }
-}
-.map-tooltip {
-  .mapboxgl-popup-content {
-    font-size: 14px;
-    line-height: 18px;
-    height: 420px;
-    width: 530px;
-    .plot,
-    .map {
-      width: 500px;
-    }
-    h2 {
-      margin-top: 0;
-    }
-    a {
-      outline: none;
-    }
-    .signal-container {
-      height: 360px;
-      overflow-x: hidden;
-      overflow-y: scroll;
-    }
-    .signal {
-      border-bottom: 1px solid #CCC;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      &:last-child {
-        border-bottom: 0;
-        margin-bottom: 0;
-        padding-bottom: 0;
-      }
-    }
-    .stat {
-      text-transform: capitalize;
-    }
+  line {
+    stroke: #007CE0;
+    stroke-dasharray: 2,2;
   }
-}
-.map-tooltip-error {
-  .mapboxgl-popup-content {
-    font-size: 16px;
-    line-height: 20px;
-    padding: 25px 35px 25px 25px;
+  text {
+    alignment-baseline: middle;
+    font-size: 12px;
   }
 }
 
-.mapboxgl-popup-close-button {
-  font-size: 25px;
-  padding: 0 12px;
-  &:hover {
-    background-color: #FFF !important;
-    color: #007CE0;
-  }
-}
 .alert-table {  
   align-items: center;
   display: flex;
   justify-content: space-between;
   >div:first-child {
     padding-right: 20px;
-  }
-}
-.alert-level {
-  background-color: #888;
-  color: #FFF;
-  padding: 1px 4px;
-  &.High {
-    background-color: #C25048;
-  }
-  &.Medium {
-    background-color: #F2645A;
-  }
-  &.Low {
-    background-color: #F7A29C;
   }
 }
 
@@ -294,23 +297,23 @@ button {
   box-shadow: 0 0 8px rgba(0,0,0,.3);
   display: none;
   font-family: 'Source Sans 3', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: normal;
   left: 50%;
   line-height: 18px;
-  padding: 15px;
+  padding: 20px;
   position: absolute;
   height: auto;
   opacity: 0;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 50em;
+  width: 42em;
   z-index: 3;
   .plot,
   .map {
     display: block;
     margin: auto;
-    width: 75%;
+    width: 95%;
   }
   h2 {
     margin-top: 0;
@@ -322,7 +325,7 @@ button {
     outline: none;
   }
   .signal-container {
-    height: 360px;
+    height: 25em;
     overflow-x: hidden;
     overflow-y: scroll;
   }
@@ -342,11 +345,12 @@ button {
   .close-btn {
     color: rgba(0, 0, 0, .5);
     cursor: pointer;
+    font-size: 14px;
     font-weight: 700;
     display: block;
     position: absolute;
-    right: 12px;
-    top: 12px;
+    right: 16px;
+    top: 16px;
     &:hover {
       color: #007CE0;
     }
@@ -355,7 +359,7 @@ button {
 
 #dateSlider {
   &.rangeSlider {
-    font-family: 'Source Sans Pro', sans-serif;
+    font-family: 'Source Sans 3', sans-serif;
     font-size: 16px;
     height: 0.4em;
     .rangeBar {
@@ -363,7 +367,8 @@ button {
       background-color: #007CE0;
     }
     &.focus {
-      .rangeBar {
+      .rangeBar,
+      .rangeFloat {
         background-color: #007CE0;
       }
     }
@@ -380,7 +385,7 @@ button {
   }
   .rangePips {
     .pip {
-      color: #CCC;
+      color: #999;
       font-size: 14px;
       &.selected {
         color: #888;
@@ -392,3 +397,42 @@ button {
     }
   }
 }
+
+@media (max-width: 768px) {
+  :root {
+    font-size: 14px;
+  }
+  header {
+    padding: 10px 20px;
+  }
+  .logo img {
+    width: 50%;
+  }
+  .select-wrapper {
+    margin: 10px 0;
+    width: 100%;
+  }
+  .slider-container {
+    margin: 0 10px;
+    width: 90%;
+  }
+  .btn-reset {
+    margin-left: 0;
+    margin-top: 20px;
+  }
+  .legend-container {
+    display: none;
+  }
+  .popup {
+    font-size: 14px;
+    width: 90%;
+    .signal-container {
+      height: 15em;
+    }
+    .plot,
+    .map {
+      width: 100%;
+    }
+  }
+}
+
