@@ -135,20 +135,20 @@
     sliderDates = dates;
   }
 
-  function onRegionSelect(e) {
-    filters.region = (e.target.value=='All regions') ? '' : e.target.value;
-    filterData();
-  }
+  // function onRegionSelect(e) {
+  //   filters.region = (e.target.value=='All regions') ? '' : e.target.value;
+  //   filterData();
+  // }
 
-  function onIndicatorSelect(e) {
-    filters.indicator_title = (e.target.value=='All datasets') ? '' : e.target.value.toLowerCase();
-    filterData();
-  }
+  // function onIndicatorSelect(e) {
+  //   filters.indicator_title = (e.target.value=='All datasets') ? '' : e.target.value.toLowerCase();
+  //   filterData();
+  // }
 
-  function onHRPSelect(e) {
-    filters.hrp_location = (e.target.checked) ? 'True' : '';
-    filterData();
-  }
+  // function onHRPSelect(e) {
+  //   filters.hrp_location = (e.target.checked) ? 'True' : '';
+  //   filterData();
+  // }
 
   function onDateSelect(e) {
     const selected = e.detail.values;
@@ -279,7 +279,8 @@
   }
 
   function mpTrack(view, content, filters) {
-    console.log('mpTrack', view, content, filters)
+    console.log(document.title, window.location.href, view, content, filters);
+    
     //mixpanel event
     let eventObject = {
       'page title': document.title,
@@ -380,7 +381,7 @@
     </div>
     
     <div class='col-9 map'>
-      <Map bind:this={map} {signalsData} headerHeight={headerHeight} />
+      <Map bind:this={map} {signalsData} headerHeight={headerHeight} mpTrack={mpTrack} />
     </div>
   </div>
 
