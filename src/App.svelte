@@ -276,6 +276,7 @@
   }
 
   function mpTrack(view, content, filters) {
+    console.log('mpTrack', view, content, filters)
     //mixpanel event
     let eventObject = {
       'page title': document.title,
