@@ -155,6 +155,9 @@
     let startTime = new Date(sliderDates[selected[0]]).getTime();
     let endTime = new Date(sliderDates[selected[1]]).getTime();
     filters.date = [startTime, endTime];
+    
+    //save original date values
+    filters.date_value = [sliderDates[selected[0]], sliderDates[selected[1]]];
   }
 
   function onCheck(e) {
@@ -292,7 +295,7 @@
       eventObject['is hrp filter'] = (filters.hrp_location === 'True') ? true : false;
       eventObject['date filter'] = formatDate(filters.date_value[0]) + ' - ' + formatDate(filters.date_value[1]);
     }
-    mixpanel.track('viz interaction', eventObject);
+    //mixpanel.track('viz interaction', eventObject);
   }
 
   function formatDate(date) {
