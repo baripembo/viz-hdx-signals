@@ -223,8 +223,6 @@
     errorMsg = '';
     map.closePopup();
 
-    //console.log('--', filters)
-
     let result = data.filter(d => {
       let validSignal = true;
       
@@ -261,6 +259,9 @@
     else {
       errorMsg = 'There are no signals to display, please widen your selection';
     }
+
+    //send mixpanel event with filter values
+    mpTrack('map view', 'filtered', filters);
   }
 
 
@@ -272,6 +273,32 @@
       'page title': document.title,
       'page type': 'datavis'
     });
+  }
+
+  function mpTrack(view, content, filters) {
+    //mixpanel event
+    let eventObject = {
+      'page title': document.title,
+      'embedded in': window.location.href,
+      'action': 'switch viz',
+      'viz type': 'signals map',
+      'current view': view,
+      'content': content,
+    }
+    if (filters != undefined) {
+      eventObject['region filter'] = filters.region.toString();
+      eventObject['indicator filter'] = filters.indicator_title.toString();
+      eventObject['is hrp filter'] = (filters.hrp_location === 'True') ? true : false;
+      eventObject['date filter'] = formatDate(filters.date_value[0]) + ' - ' + formatDate(filters.date_value[1]);
+    }
+    mixpanel.track('viz interaction', eventObject);
+  }
+
+  function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
   }
 
   onMount(() => {

@@ -52,6 +52,8 @@
     return userAgentCheck || screenSizeCheck;
 	}
 
+  export let mpTrack = () => {}
+
 	onMount(() => {
 		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
 
@@ -275,6 +277,9 @@
 
     //set popup content
     showPopup(content);
+
+    //track click
+	  mpTrack('popup view', currentSignals[0].location);
   }
 
   function isValid(url) {
