@@ -84,6 +84,9 @@
     //filter set of data within starting date range
     filters = {region: [], indicator_title: [], date: [defaultStartDate, endDate]};
     signalsData = signals.filter(d => new Date(d.date).getTime() >= defaultStartDate.getTime());
+
+    //save initial date values
+    filters.date_value = [defaultStartDate, endDate];
     
     createFilters();
     createDateSlider();
