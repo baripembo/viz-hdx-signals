@@ -256,7 +256,6 @@
   }
 
   function mouseclick(e) {
-  	e.stopImmediatePropagation();
 		let iso3 = e.features[0].properties.iso3;
 		currentSignals = getAlerts(iso3);
 
