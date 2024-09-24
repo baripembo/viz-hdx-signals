@@ -282,8 +282,6 @@
   }
 
   function mpTrack(view, content, filters) {
-    console.log(document.title, window.location.href, view, content, filters);
-    
     //mixpanel event
     let eventObject = {
       'page title': document.title,
