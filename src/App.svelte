@@ -294,8 +294,8 @@
       'content': content,
     }
     if (filters != undefined) {
-      eventObject['region filter'] = filters.region.toString();
-      eventObject['indicator filter'] = filters.indicator_title.toString();
+      eventObject['region filter'] = filters.region;
+      eventObject['indicator filter'] = filters.indicator_title;
       eventObject['is hrp filter'] = (filters.hrp_location === 'True') ? true : false;
       eventObject['date filter'] = formatDate(filters.date_value[0]) + ' - ' + formatDate(filters.date_value[1]);
     }
