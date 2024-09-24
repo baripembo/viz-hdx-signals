@@ -84,6 +84,9 @@
     //filter set of data within starting date range
     filters = {region: [], indicator_title: [], date: [defaultStartDate, endDate]};
     signalsData = signals.filter(d => new Date(d.date).getTime() >= defaultStartDate.getTime());
+
+    //save initial date values
+    filters.date_value = [defaultStartDate, endDate];
     
     createFilters();
     createDateSlider();
@@ -135,26 +138,29 @@
     sliderDates = dates;
   }
 
-  function onRegionSelect(e) {
-    filters.region = (e.target.value=='All regions') ? '' : e.target.value;
-    filterData();
-  }
+  // function onRegionSelect(e) {
+  //   filters.region = (e.target.value=='All regions') ? '' : e.target.value;
+  //   filterData();
+  // }
 
-  function onIndicatorSelect(e) {
-    filters.indicator_title = (e.target.value=='All datasets') ? '' : e.target.value.toLowerCase();
-    filterData();
-  }
+  // function onIndicatorSelect(e) {
+  //   filters.indicator_title = (e.target.value=='All datasets') ? '' : e.target.value.toLowerCase();
+  //   filterData();
+  // }
 
-  function onHRPSelect(e) {
-    filters.hrp_location = (e.target.checked) ? 'True' : '';
-    filterData();
-  }
+  // function onHRPSelect(e) {
+  //   filters.hrp_location = (e.target.checked) ? 'True' : '';
+  //   filterData();
+  // }
 
   function onDateSelect(e) {
     const selected = e.detail.values;
     let startTime = new Date(sliderDates[selected[0]]).getTime();
     let endTime = new Date(sliderDates[selected[1]]).getTime();
     filters.date = [startTime, endTime];
+
+    //save original date values
+    filters.date_value = [sliderDates[selected[0]], sliderDates[selected[1]]];
   }
 
   function onCheck(e) {
@@ -223,8 +229,6 @@
     errorMsg = '';
     map.closePopup();
 
-    //console.log('--', filters)
-
     let result = data.filter(d => {
       let validSignal = true;
       
@@ -261,6 +265,9 @@
     else {
       errorMsg = 'There are no signals to display, please widen your selection';
     }
+
+    //send mixpanel event with filter values
+    mpTrack('map view', 'filtered', filters);
   }
 
 
@@ -272,6 +279,34 @@
       'page title': document.title,
       'page type': 'datavis'
     });
+  }
+
+  function mpTrack(view, content, filters) {
+    console.log(document.title, window.location.href, view, content, filters);
+    
+    //mixpanel event
+    let eventObject = {
+      'page title': document.title,
+      'embedded in': window.location.href,
+      'action': 'switch viz',
+      'viz type': 'signals map',
+      'current view': view,
+      'content': content,
+    }
+    if (filters != undefined) {
+      eventObject['region filter'] = filters.region;
+      eventObject['indicator filter'] = filters.indicator_title;
+      eventObject['is hrp filter'] = (filters.hrp_location === 'True') ? true : false;
+      eventObject['date filter'] = formatDate(filters.date_value[0]) + ' - ' + formatDate(filters.date_value[1]);
+    }
+    mixpanel.track('viz interaction', eventObject);
+  }
+
+  function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
   }
 
   onMount(() => {
@@ -349,7 +384,7 @@
     </div>
     
     <div class='col-9 map'>
-      <Map bind:this={map} {signalsData} headerHeight={headerHeight} />
+      <Map bind:this={map} {signalsData} headerHeight={headerHeight} mpTrack={mpTrack} />
     </div>
   </div>
 

@@ -21,6 +21,8 @@
 	let minMarkerSize = 8;
 	let maxMarkerSize = 20;
 	let minZoom = 1;
+	let panelOpen = false;
+	let lastSignal = '';
 
 	$: if (mapContainer) {
 		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
@@ -51,6 +53,8 @@
     const screenSizeCheck = window.matchMedia("(max-width: 767px)").matches;
     return userAgentCheck || screenSizeCheck;
 	}
+
+  export let mpTrack = () => {}
 
 	onMount(() => {
 		mapContainer.style.height = (isMobile()) ? ((window.innerHeight - headerHeight)*0.6) + 'px' : (window.innerHeight - headerHeight) + 'px';
@@ -254,6 +258,8 @@
   }
 
   function mouseclick(e) {
+  	if (panelOpen) return;
+
 		let iso3 = e.features[0].properties.iso3;
 		currentSignals = getAlerts(iso3);
 
@@ -275,6 +281,15 @@
 
     //set popup content
     showPopup(content);
+
+    //track click
+  	panelOpen = true;
+	  mpTrack('popup view', currentSignals[0].location);
+
+    //disable click for 1s to prevent multiple events
+		setTimeout(() => {
+			panelOpen = false;
+		}, 1000);
   }
 
   function isValid(url) {
