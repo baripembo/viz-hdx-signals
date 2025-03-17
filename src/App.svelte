@@ -54,6 +54,7 @@
   function dataLoaded(coords, signals, indicator_titles) {
     coordsData = coords;
     namesData = indicator_titles;
+    console.log('dataLoaded', signals)
 
     //sort data
     signals.sort(function(a,b) {
@@ -119,11 +120,12 @@
       regions = [... new Set(regionArray)];
     }
     if (filters.indicator_title=='') {
-      //get list of indicators
-      let indicatorArray = signalsData.map(d => d.indicator_title);
-      indicatorArray.sort();
+      let indicatorArray = namesData
+        .filter(d => d.indicator_id !== '')
+        .map(d => d.indicator_subject);
+      indicatorArray.sort()
       indicatorArray.unshift('All datasets');
-      indicators = [... new Set(indicatorArray)];
+      indicators = indicatorArray;
     }
   }
 

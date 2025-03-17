@@ -75,7 +75,6 @@
 
 	  map.on('load', function() {
 	    console.log('Map loaded')
-		  console.log('in map', data)
 
 		  //initPolys();
 		  loadFeatures();
