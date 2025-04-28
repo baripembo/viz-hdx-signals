@@ -110,7 +110,7 @@
 		  a[iso3].alert_count++;
 		  return a;
 		}, Object.create(null)));
-
+    console.log(countByCountry)
 		let signals = [];
 		let hrpList = [];
 
